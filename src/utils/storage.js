@@ -56,7 +56,8 @@ function remove(key) {
  *   placeholder?: boolean,
  *   attributes?: string[],
  *   tags?: string[],
- *   pinnedSlot?: string
+ *   pinnedSlot?: string,
+ *   degreeCredit?: 'degree' | 'extra'
  * }>} completedCourses
  */
 

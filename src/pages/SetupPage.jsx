@@ -51,6 +51,7 @@ export function SetupPage() {
       attributes: c.attributes,
       tags: c.tags,
       pinnedSlot: c.pinnedSlot,
+      degreeCredit: c.degreeCredit,
     }))
   );
   const [draftProfile, setDraftProfile] = useState(profile ?? null);

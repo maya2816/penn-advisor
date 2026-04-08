@@ -29,6 +29,7 @@ import { solve } from "./assignmentSolver.js";
  * @property {string[]} [tags]        Free-form tags, e.g. ["writing_seminar"]
  * @property {string[]} [attributes]  Catalog attributes, e.g. ["EUNS","EUSS"]
  * @property {string}   [pinnedSlot]  User override: force-assign to this requirement id
+ * @property {'degree'|'extra'} [degreeCredit]  "extra" = transcript only; excluded from audit assignment
  */
 
 /**
@@ -76,8 +77,8 @@ function walk(node, fn, parent = null) {
   if (node.children) for (const c of node.children) walk(c, fn, node);
 }
 
-/** Does a course satisfy a `from` pool? */
-function courseMatchesPool(course, pool) {
+/** Does a course satisfy a `from` pool? Exported for eligible-slot UI. */
+export function courseMatchesPool(course, pool) {
   if (!course) return false;
   if (pool.any) return true;
   if (pool.course_ids) return pool.course_ids.includes(course.id);
@@ -112,6 +113,7 @@ export function computeCompletion(completedCourses, programId) {
     const transcriptCu = Number(sc.cu);
     const cu =
       Number.isFinite(transcriptCu) && transcriptCu > 0 ? transcriptCu : (cat?.cu ?? 1);
+    const degreeCredit = sc.degreeCredit === "extra" ? "extra" : "degree";
     return {
       id: sc.id,
       cu,
@@ -121,8 +123,11 @@ export function computeCompletion(completedCourses, programId) {
       tags: [...new Set([...(cat?.tags || []), ...(sc.tags || [])])],
       attributes: [...new Set([...(cat?.attributes || []), ...(sc.attributes || [])])],
       pinnedSlot: sc.pinnedSlot,
+      degreeCredit,
     };
   });
+
+  const degreeCourses = studentCourses.filter((c) => c.degreeCredit !== "extra");
 
   const studentById = Object.fromEntries(studentCourses.map((c) => [c.id, c]));
 
@@ -149,14 +154,27 @@ export function computeCompletion(completedCourses, programId) {
     }
   }
 
-  // 2. Run the solver on the exclusive leaves.
-  const eligibleForSolver = studentCourses.filter((sc) =>
+  // 2. Run the solver on the exclusive leaves (degree-credit courses only).
+  const eligibleForSolver = degreeCourses.filter((sc) =>
     solverSlots.some((s) => s.pool.has(sc.id))
   );
   const { assignments, conflicts } = solve({
     courses: eligibleForSolver,
     slots: solverSlots,
   });
+
+  const solverSlotIds = new Set(solverSlots.map((s) => s.id));
+  const warnings = [];
+
+  for (const sc of degreeCourses) {
+    if (!sc.pinnedSlot || !solverSlotIds.has(sc.pinnedSlot)) continue;
+    const assigned = assignments[sc.id];
+    if (assigned !== sc.pinnedSlot) {
+      warnings.push(
+        `${sc.id}: could not honor pin to "${sc.pinnedSlot}" in the exclusive-slot assignment.`
+      );
+    }
+  }
 
   // 3. Bucket courses by leaf id.
   /** @type {Object<string,string[]>} */
@@ -170,16 +188,40 @@ export function computeCompletion(completedCourses, programId) {
   const consumed = new Set(Object.keys(assignments));
 
   // 4. Greedy fill for non-exclusive leaves (in tree order).
-  //    These are: required-course leaves (single course_id), choose-one
-  //    pools that are NOT exclusive, attribute-based pools, and "any".
-  const warnings = [];
+  //    Pinned engine-leaf placements run first, then greedy fill.
   for (const { node } of engineLeaves) {
     courseIdsByLeaf[node.id] ||= [];
     let need = node.min_cu;
 
-    for (const sc of studentCourses) {
+    for (const sc of degreeCourses) {
       if (need <= 0) break;
       if (consumed.has(sc.id)) continue;
+      if (sc.pinnedSlot !== node.id) continue;
+      if (!courseMatchesPool(sc, node.from)) {
+        warnings.push(
+          `${sc.id}: pinned to "${node.label}" but the course does not match that requirement pool.`
+        );
+        continue;
+      }
+      const pinSectionConstraint = (node.constraints || []).find(
+        (c) => c.type === "section_title_required" && c.course_id === sc.id
+      );
+      if (pinSectionConstraint && sc.section !== pinSectionConstraint.value) {
+        warnings.push(
+          `${sc.id} only counts toward ${node.label} if its section is "${pinSectionConstraint.value}".`
+        );
+        continue;
+      }
+      courseIdsByLeaf[node.id].push(sc.id);
+      consumed.add(sc.id);
+      need -= sc.cu;
+    }
+
+    for (const sc of degreeCourses) {
+      if (need <= 0) break;
+      if (consumed.has(sc.id)) continue;
+      // Do not fill this leaf with courses reserved for another slot (pins are honored in tree order).
+      if (sc.pinnedSlot && sc.pinnedSlot !== node.id) continue;
       if (!courseMatchesPool(sc, node.from)) continue;
 
       // Constraint: section_title_required (LAWM 5060 -> AI Ethics)
@@ -319,8 +361,8 @@ export function computeCompletion(completedCourses, programId) {
     }
   }
 
-  // 8. Outputs.
-  const unassignedCourses = studentCourses
+  // 8. Outputs. Extra-credit courses never consume slots; omit from unassigned noise.
+  const unassignedCourses = degreeCourses
     .map((c) => c.id)
     .filter((id) => !consumed.has(id));
 

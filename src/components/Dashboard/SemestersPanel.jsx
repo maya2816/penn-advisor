@@ -10,7 +10,9 @@ import {
   getProgramRequirement,
   courseIdsMatchingLeafPool,
 } from "../../utils/programRequirementIndex.js";
-import { CourseRecordRowMeta } from "./CourseRecordRowMeta.jsx";
+import { buildSectionStyleMap } from "../../utils/sectionCategoryStyles.js";
+import { CourseRecordRow } from "./CourseRecordRow.jsx";
+import { SemesterAssignmentModal } from "./SemesterAssignmentModal.jsx";
 
 /**
  * SemestersPanel — Record (transcript truth + attribution + attribute edits) vs Plan (draft).
@@ -37,8 +39,14 @@ export function SemestersPanel({
   const [newTermLabel, setNewTermLabel] = useState(GRAD_TERM_OPTIONS[0] || "Fall 2026");
   const [planIntoTerm, setPlanIntoTerm] = useState(GRAD_TERM_OPTIONS[0] || "Fall 2026");
   const [selectedGapId, setSelectedGapId] = useState(null);
+  const [assignmentModalTerm, setAssignmentModalTerm] = useState(null);
 
   const attributionMap = useMemo(() => buildAttributionMap(completion), [completion]);
+
+  const sectionStyleMap = useMemo(
+    () => buildSectionStyleMap(completion?.root?.children),
+    [completion]
+  );
 
   const programReq = useMemo(() => getProgramRequirement(programId), [programId]);
 
@@ -131,6 +139,22 @@ export function SemestersPanel({
     [setCompletedCourses]
   );
 
+  const applyTermAssignmentPatches = useCallback(
+    (term, patches) => {
+      setCompletedCourses((prev) => {
+        let i = 0;
+        return prev.map((c) => {
+          const key = c.semester || "Manually added";
+          if (key !== term) return c;
+          const p = patches[i++];
+          if (!p) return c;
+          return { ...c, pinnedSlot: p.pinnedSlot, degreeCredit: p.degreeCredit };
+        });
+      });
+    },
+    [setCompletedCourses]
+  );
+
   return (
     <div className="space-y-8">
       <div>
@@ -184,63 +208,61 @@ export function SemestersPanel({
                   key={term}
                   className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-card"
                 >
-                  <button
-                    type="button"
-                    onClick={() => setOpenTermId((id) => (id === term ? null : term))}
-                    aria-expanded={expanded}
-                    className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-slate-50/80"
-                  >
-                    <div>
-                      <h3 className="text-base font-semibold text-slate-900">{term}</h3>
-                      <p className="num mt-1 text-xs text-muted">
-                        <span className="font-semibold text-slate-800">{termCu}</span> CU
-                        {gpa != null && (
-                          <>
-                            {" · "}
-                            Semester GPA{" "}
-                            <span className="font-semibold text-slate-800">{gpa.toFixed(2)}</span>
-                          </>
-                        )}
-                        {gpa == null && (
-                          <span className="text-slate-400"> · No letter grades for GPA estimate</span>
-                        )}
-                      </p>
-                    </div>
-                    <span
-                      className={`shrink-0 text-muted transition ${expanded ? "rotate-180" : ""}`}
-                      aria-hidden
+                  <div className="flex w-full items-stretch gap-2 px-3 py-2 sm:px-4 sm:py-3">
+                    <button
+                      type="button"
+                      onClick={() => setOpenTermId((id) => (id === term ? null : term))}
+                      aria-expanded={expanded}
+                      className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-slate-50/80 sm:px-3"
                     >
-                      <Chevron />
-                    </span>
-                  </button>
+                      <div className="min-w-0">
+                        <h3 className="text-base font-semibold text-slate-900">{term}</h3>
+                        <p className="num mt-1 text-xs text-muted">
+                          <span className="font-semibold text-slate-800">{termCu}</span> CU
+                          {gpa != null && (
+                            <>
+                              {" · "}
+                              Semester GPA{" "}
+                              <span className="font-semibold text-slate-800">{gpa.toFixed(2)}</span>
+                            </>
+                          )}
+                          {gpa == null && (
+                            <span className="text-slate-400">
+                              {" "}
+                              · No letter grades for GPA estimate
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                      <span
+                        className={`shrink-0 text-muted transition ${expanded ? "rotate-180" : ""}`}
+                        aria-hidden
+                      >
+                        <Chevron />
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAssignmentModalTerm(term)}
+                      className="shrink-0 self-center rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 shadow-sm transition hover:border-penn/40 hover:bg-penn-50/50 focus:outline-none focus:ring-2 focus:ring-penn/25"
+                    >
+                      Assign in audit
+                    </button>
+                  </div>
                   {expanded && (
                     <div className="border-t border-slate-100 px-5 py-4">
                       <ul className="divide-y divide-slate-100">
                         {list.map((c, idx) => (
-                          <li key={`${term}-${c.id}-${idx}`} className="py-3 first:pt-0 last:pb-0">
-                            <div className="flex flex-wrap items-start justify-between gap-3">
-                              <div className="min-w-0">
-                                <span className="font-mono text-sm font-semibold text-slate-900">
-                                  {c.id.replace(/^([A-Z]+)/, "$1 ")}
-                                </span>
-                                <p className="mt-0.5 text-xs text-slate-600">
-                                  {courses[c.id]?.title || ""}
-                                </p>
-                              </div>
-                              <div className="num flex shrink-0 flex-col items-end text-xs text-slate-600">
-                                <span className="font-medium tabular-nums text-slate-800">
-                                  {cuForCourse(c)} CU
-                                </span>
-                                {c.grade && <span className="mt-0.5">{c.grade}</span>}
-                              </div>
-                            </div>
-                            <CourseRecordRowMeta
-                              course={c}
-                              programId={programId}
-                              attribution={attributionMap[c.id]}
-                              onUpdateCourse={updateCourseFields}
-                            />
-                          </li>
+                          <CourseRecordRow
+                            key={`${term}-${c.id}-${idx}`}
+                            rowKey={`${term}-${c.id}-${idx}`}
+                            course={c}
+                            programId={programId}
+                            attribution={attributionMap[c.id]}
+                            sectionStyleMap={sectionStyleMap}
+                            cu={cuForCourse(c)}
+                            onUpdateCourse={updateCourseFields}
+                          />
                         ))}
                       </ul>
                     </div>
@@ -251,6 +273,21 @@ export function SemestersPanel({
           )}
         </div>
       )}
+
+      <SemesterAssignmentModal
+        open={Boolean(
+          assignmentModalTerm && (completedByTerm[assignmentModalTerm] || []).length
+        )}
+        term={assignmentModalTerm ?? ""}
+        courses={
+          assignmentModalTerm ? completedByTerm[assignmentModalTerm] || [] : []
+        }
+        programId={programId || ""}
+        onClose={() => setAssignmentModalTerm(null)}
+        onApply={(patches) => {
+          if (assignmentModalTerm) applyTermAssignmentPatches(assignmentModalTerm, patches);
+        }}
+      />
 
       {mode === "plan" && (
         <>
