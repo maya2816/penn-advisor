@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body, #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-canvas text-slate-900 antialiased;
+    font-family: theme("fontFamily.sans");
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+  /* Numerics get tabular spacing so progress numbers don't jitter as they update */
+  .num {
+    font-variant-numeric: tabular-nums;
+    font-family: theme("fontFamily.mono");
+  }
+}

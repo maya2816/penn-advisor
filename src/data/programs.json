@@ -1,0 +1,105 @@
+{
+  "SEAS_AI_BSE": {
+    "program_id": "SEAS_AI_BSE",
+    "name": "Artificial Intelligence, BSE",
+    "school": "SEAS",
+    "catalog_year": "2025-26",
+    "total_cu": 37,
+    "requirement": {
+      "id": "root",
+      "label": "Artificial Intelligence BSE",
+      "min_cu": 37,
+      "children": [
+        {
+          "id": "computing",
+          "label": "Computing",
+          "min_cu": 5,
+          "children": [
+            { "id": "computing.cis1100", "label": "CIS 1100", "min_cu": 1, "from": { "course_ids": ["CIS1100"] } },
+            { "id": "computing.cis1200", "label": "CIS 1200", "min_cu": 1, "from": { "course_ids": ["CIS1200"] } },
+            { "id": "computing.cis1210", "label": "CIS 1210", "min_cu": 1, "from": { "course_ids": ["CIS1210"] } },
+            { "id": "computing.cis2450", "label": "CIS 2450", "min_cu": 1, "from": { "course_ids": ["CIS2450"] } },
+            { "id": "computing.cis3200", "label": "CIS 3200", "min_cu": 1, "from": { "course_ids": ["CIS3200"] } }
+          ]
+        },
+        {
+          "id": "math_science",
+          "label": "Math and Natural Science",
+          "min_cu": 7,
+          "children": [
+            { "id": "math.calc1",       "label": "Calculus, Part I",  "min_cu": 1, "from": { "course_ids": ["MATH1400"] } },
+            { "id": "math.calc2",       "label": "Calculus, Part II", "min_cu": 1, "from": { "course_ids": ["MATH1410","MATH1610"] } },
+            { "id": "math.cis1600",     "label": "CIS 1600",          "min_cu": 1, "from": { "course_ids": ["CIS1600"] } },
+            { "id": "math.linalg",      "label": "Linear Algebra",    "min_cu": 1, "from": { "course_ids": ["ESE2030"] } },
+            { "id": "math.probability", "label": "Probability",       "min_cu": 1, "from": { "course_ids": ["ESE3010","STAT4300"] } },
+            { "id": "math.stats",       "label": "Statistics for Data Science", "min_cu": 1, "from": { "course_ids": ["ESE4020","ESE5420"] } },
+            { "id": "math.natsci",      "label": "Natural Science Elective",    "min_cu": 1, "from": { "attribute": "EUNS" }, "note": "Any course with the EUNS attribute (or appropriate AP credit)." }
+          ]
+        },
+        {
+          "id": "ai",
+          "label": "Artificial Intelligence",
+          "min_cu": 12,
+          "note": "12 CU total. At least 1 CU from each of 6 categories. One course cannot satisfy multiple categories.",
+          "children": [
+            { "id": "ai.intro",   "label": "Introduction to AI",   "min_cu": 1, "exclusive": true, "from": { "course_ids": ["CIS4210","CIS5210","ESE2000"] } },
+            { "id": "ai.ml",      "label": "Machine Learning",    "min_cu": 1, "exclusive": true, "from": { "course_ids": ["CIS4190","CIS5190","CIS5200"] } },
+            { "id": "ai.signals", "label": "Signals & Systems",   "min_cu": 1, "exclusive": true, "from": { "course_ids": ["ESE2100","ESE2240"] } },
+            { "id": "ai.opt",     "label": "Optimization & Control", "min_cu": 1, "exclusive": true, "from": { "course_ids": ["ESE3040","ESE4210"] } },
+            { "id": "ai.vislang", "label": "Vision & Language",   "min_cu": 1, "exclusive": true, "from": { "course_ids": ["CIS4300","CIS5300","CIS4810","CIS5810"] } },
+            { "id": "ai.project", "label": "AI Project",          "min_cu": 1, "exclusive": true, "from": { "course_ids": ["CIS3500","CIS4300","CIS5300","CIS4810","CIS5810","ESE3060","ESE3600","ESE4210","NETS2120","NETS2130"] } },
+            { "id": "ai.electives", "label": "AI Electives",      "min_cu": 6, "exclusive": true,
+              "note": "Remaining CUs from any of the 6 categories above OR from the AI Electives list.",
+              "from": { "course_ids": [
+                "CIS4210","CIS5210","ESE2000",
+                "CIS4190","CIS5190","CIS5200",
+                "ESE2100","ESE2240",
+                "ESE3040","ESE4210",
+                "CIS4300","CIS5300","CIS4810","CIS5810",
+                "CIS3500","ESE3060","ESE3600","NETS2120","NETS2130",
+                "CIS3333","CIS6200","CIS6250","ESE4380","ESE5380","ESE5140","ESE5460","ESE6450","ESE6740","CIS4270","CIS5270",
+                "ESE3030","ESE5000","ESE5050","ESE5060","ESE6050","ESE6060","ESE6180","ESE6190",
+                "BE5210","CIS4120","CIS5120","CIS4500","CIS5500","CIS5360","CIS5800","CIS6500","MEAM5200","MEAM6200","ESE4040","ESE6150","ESE6500","ESE6510","NETS3120","NETS4120"
+              ] }
+            }
+          ]
+        },
+        {
+          "id": "senior_design",
+          "label": "Senior Design",
+          "min_cu": 2,
+          "children": [
+            { "id": "senior.part1", "label": "Senior Design I",  "min_cu": 1, "from": { "course_ids": ["CIS4000","CIS4100","ESE4500","MEAM4450","BE4950","MSE4950","CBE4000"] } },
+            { "id": "senior.part2", "label": "Senior Design II", "min_cu": 1, "from": { "course_ids": ["CIS4010","CIS4110","ESE4510","MEAM4460","BE4960","MSE4960","CBE4590"] } }
+          ]
+        },
+        {
+          "id": "tech_electives",
+          "label": "Technical Electives",
+          "min_cu": 3,
+          "from": { "attribute": "TECH_ELECTIVE" },
+          "constraints": [{ "type": "max_cu_at_level", "level": 1000, "cu": 1 }],
+          "note": "CIS approved tech electives (status: unrestricted, restricted, or ask). At most 1 CU may be 1000-level."
+        },
+        {
+          "id": "general",
+          "label": "General Electives",
+          "min_cu": 8,
+          "children": [
+            { "id": "gen.ai_ethics", "label": "AI Ethics Elective", "min_cu": 1,
+              "from": { "course_ids": ["LAWM5060","CIS4230","CIS5230"] },
+              "constraints": [{ "type": "section_title_required", "course_id": "LAWM5060", "value": "Technology Law and Ethics" }] },
+            { "id": "gen.cogsci", "label": "Cognitive Science Elective", "min_cu": 1,
+              "from": { "course_ids": ["COGS1001","LING0500","LING2500","LING3810","PHIL1710","PHIL2640","PHIL4721","PHIL4840","PSYC1210","PSYC1230","PSYC1310","PSYC1340","PSYC2737"] } },
+            { "id": "gen.ssh3", "label": "Social Science or Humanities (3 CU)", "min_cu": 3,
+              "from": { "attributes": ["EUSS","EUHS"] },
+              "constraints": [{ "type": "must_include_tag", "tag": "writing_seminar" }] },
+            { "id": "gen.ssh_or_tbs2", "label": "Social Science / Humanities / TBS (2 CU)", "min_cu": 2,
+              "from": { "attributes": ["EUSS","EUHS","EUTB"] } },
+            { "id": "gen.free", "label": "Free Elective", "min_cu": 1, "from": { "any": true } }
+          ]
+        }
+      ]
+    }
+  }
+}
