@@ -11,7 +11,15 @@ import { useStudent } from "../state/StudentContext.jsx";
  */
 
 export function DashboardPage() {
-  const { completion, completedCourses, profile, planByTerm, setPlanByTerm } = useStudent();
+  const {
+    completion,
+    programId,
+    completedCourses,
+    setCompletedCourses,
+    profile,
+    planByTerm,
+    setPlanByTerm,
+  } = useStudent();
   const [tab, setTab] = useState("overview");
 
   if (!completion) return null;
@@ -52,7 +60,10 @@ export function DashboardPage() {
 
             {tab === "semesters" && (
               <SemestersPanel
+                completion={completion}
+                programId={programId}
                 completedCourses={completedCourses}
+                setCompletedCourses={setCompletedCourses}
                 planByTerm={planByTerm}
                 setPlanByTerm={setPlanByTerm}
               />

@@ -43,10 +43,14 @@ export function SetupPage() {
     completedCourses.map((c) => ({
       id: c.id,
       semester: c.semester ?? null,
+      section: c.section,
       cu: c.cu,
       grade: c.grade,
       inProgress: c.inProgress,
       placeholder: c.placeholder,
+      attributes: c.attributes,
+      tags: c.tags,
+      pinnedSlot: c.pinnedSlot,
     }))
   );
   const [draftProfile, setDraftProfile] = useState(profile ?? null);

@@ -46,7 +46,18 @@ function remove(key) {
 /**
  * @typedef {Object} StoredStudent
  * @property {string}            programId      e.g. "SEAS_AI_BSE"
- * @property {Array<{id:string,section?:string,tags?:string[],pinnedSlot?:string}>} completedCourses
+ * @property {Array<{
+ *   id: string,
+ *   semester?: string|null,
+ *   section?: string,
+ *   cu?: number,
+ *   grade?: string|null,
+ *   inProgress?: boolean,
+ *   placeholder?: boolean,
+ *   attributes?: string[],
+ *   tags?: string[],
+ *   pinnedSlot?: string
+ * }>} completedCourses
  */
 
 /**

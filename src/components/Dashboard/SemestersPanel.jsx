@@ -1,13 +1,22 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import courses from "../../data/courses.json" with { type: "json" };
 import { CourseSearch } from "../Setup/CourseSearch.jsx";
 import { GRAD_TERM_OPTIONS } from "../../utils/graduationTerms.js";
 import { compareSemesterLabels } from "../../utils/semesterOrder.js";
 import { gpaFromCourses } from "../../utils/gradePoints.js";
+import { buildAttributionMap } from "../../utils/courseAttributionMap.js";
+import {
+  getIncompleteGaps,
+  getProgramRequirement,
+  courseIdsMatchingLeafPool,
+} from "../../utils/programRequirementIndex.js";
+import { CourseRecordRowMeta } from "./CourseRecordRowMeta.jsx";
 
 /**
- * SemestersPanel — transcript record (CU + estimated GPA per term) vs draft planning.
+ * SemestersPanel — Record (transcript truth + attribution + attribute edits) vs Plan (draft).
  */
+
+const catalogList = Object.values(courses);
 
 function cuForCourse(c) {
   const t = Number(c.cu);
@@ -15,10 +24,35 @@ function cuForCourse(c) {
   return courses[c.id]?.cu ?? 1;
 }
 
-export function SemestersPanel({ completedCourses, planByTerm, setPlanByTerm }) {
+export function SemestersPanel({
+  completion,
+  programId,
+  completedCourses,
+  setCompletedCourses,
+  planByTerm,
+  setPlanByTerm,
+}) {
   const [mode, setMode] = useState("record");
+  const [openTermId, setOpenTermId] = useState(null);
   const [newTermLabel, setNewTermLabel] = useState(GRAD_TERM_OPTIONS[0] || "Fall 2026");
   const [planIntoTerm, setPlanIntoTerm] = useState(GRAD_TERM_OPTIONS[0] || "Fall 2026");
+  const [selectedGapId, setSelectedGapId] = useState(null);
+
+  const attributionMap = useMemo(() => buildAttributionMap(completion), [completion]);
+
+  const programReq = useMemo(() => getProgramRequirement(programId), [programId]);
+
+  const gaps = useMemo(() => {
+    if (!completion || !programReq) return [];
+    return getIncompleteGaps(completion, programReq);
+  }, [completion, programReq]);
+
+  const allowedIdsForSearch = useMemo(() => {
+    if (!selectedGapId || !programReq) return undefined;
+    const gap = gaps.find((g) => g.id === selectedGapId);
+    if (!gap?.raw) return undefined;
+    return courseIdsMatchingLeafPool(gap.raw, catalogList);
+  }, [selectedGapId, gaps, programReq]);
 
   const completedByTerm = useMemo(() => {
     const m = {};
@@ -88,15 +122,24 @@ export function SemestersPanel({ completedCourses, planByTerm, setPlanByTerm }) 
     });
   };
 
+  const updateCourseFields = useCallback(
+    (courseId, patch) => {
+      setCompletedCourses((prev) =>
+        prev.map((c) => (c.id === courseId ? { ...c, ...patch } : c))
+      );
+    },
+    [setCompletedCourses]
+  );
+
   return (
     <div className="space-y-8">
       <div>
         <h2 className="text-lg font-semibold text-slate-900">Semesters</h2>
         <p className="mt-1 max-w-3xl text-sm leading-relaxed text-slate-600">
-          <span className="font-medium text-slate-800">Record</span> summarizes completed work from
-          your saved transcript (CU and an estimated term GPA from letter grades).{" "}
-          <span className="font-medium text-slate-800">Plan</span> is a draft schedule only — it does
-          not change the degree audit until courses are completed and recorded.
+          <span className="font-medium text-slate-800">Record</span> is your transcript-backed
+          history (CU, grades, where each course counts in the audit, and optional attribute
+          overrides). <span className="font-medium text-slate-800">Plan</span> is draft-only — it
+          does not change degree progress until you complete a course and it appears in Record.
         </p>
       </div>
 
@@ -124,7 +167,7 @@ export function SemestersPanel({ completedCourses, planByTerm, setPlanByTerm }) 
       </div>
 
       {mode === "record" && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {completedTermKeys.length === 0 ? (
             <p className="rounded-2xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-muted">
               No completed terms on file yet. Finish setup with a transcript, or use Plan to sketch
@@ -135,12 +178,18 @@ export function SemestersPanel({ completedCourses, planByTerm, setPlanByTerm }) 
               const list = completedByTerm[term] || [];
               const termCu = list.reduce((s, c) => s + cuForCourse(c), 0);
               const gpa = gpaFromCourses(list, cuForCourse);
+              const expanded = openTermId === term;
               return (
-                <article
+                <div
                   key={term}
                   className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-card"
                 >
-                  <header className="flex flex-wrap items-end justify-between gap-3 border-b border-slate-100 bg-gradient-to-r from-white to-slate-50/80 px-6 py-4">
+                  <button
+                    type="button"
+                    onClick={() => setOpenTermId((id) => (id === term ? null : term))}
+                    aria-expanded={expanded}
+                    className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-slate-50/80"
+                  >
                     <div>
                       <h3 className="text-base font-semibold text-slate-900">{term}</h3>
                       <p className="num mt-1 text-xs text-muted">
@@ -148,7 +197,7 @@ export function SemestersPanel({ completedCourses, planByTerm, setPlanByTerm }) 
                         {gpa != null && (
                           <>
                             {" · "}
-                            Est. GPA{" "}
+                            Semester GPA{" "}
                             <span className="font-semibold text-slate-800">{gpa.toFixed(2)}</span>
                           </>
                         )}
@@ -157,33 +206,46 @@ export function SemestersPanel({ completedCourses, planByTerm, setPlanByTerm }) 
                         )}
                       </p>
                     </div>
-                  </header>
-                  <ul className="space-y-2 px-6 py-5">
-                    {list.map((c) => (
-                      <li
-                        key={`${c.id}-${c.semester || ""}`}
-                        className="rounded-xl border border-slate-100 bg-slate-50/50 px-4 py-3"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <span className="font-mono text-sm font-semibold text-slate-900">
-                              {c.id.replace(/^([A-Z]+)/, "$1 ")}
-                            </span>
-                            <p className="mt-0.5 truncate text-xs text-slate-600">
-                              {courses[c.id]?.title || ""}
-                            </p>
-                          </div>
-                          <div className="num shrink-0 text-right text-xs text-slate-500">
-                            <div className="font-medium tabular-nums text-slate-700">
-                              {cuForCourse(c)} CU
+                    <span
+                      className={`shrink-0 text-muted transition ${expanded ? "rotate-180" : ""}`}
+                      aria-hidden
+                    >
+                      <Chevron />
+                    </span>
+                  </button>
+                  {expanded && (
+                    <div className="border-t border-slate-100 px-5 py-4">
+                      <ul className="divide-y divide-slate-100">
+                        {list.map((c, idx) => (
+                          <li key={`${term}-${c.id}-${idx}`} className="py-3 first:pt-0 last:pb-0">
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <span className="font-mono text-sm font-semibold text-slate-900">
+                                  {c.id.replace(/^([A-Z]+)/, "$1 ")}
+                                </span>
+                                <p className="mt-0.5 text-xs text-slate-600">
+                                  {courses[c.id]?.title || ""}
+                                </p>
+                              </div>
+                              <div className="num flex shrink-0 flex-col items-end text-xs text-slate-600">
+                                <span className="font-medium tabular-nums text-slate-800">
+                                  {cuForCourse(c)} CU
+                                </span>
+                                {c.grade && <span className="mt-0.5">{c.grade}</span>}
+                              </div>
                             </div>
-                            {c.grade && <div className="mt-0.5">{c.grade}</div>}
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </article>
+                            <CourseRecordRowMeta
+                              course={c}
+                              programId={programId}
+                              attribution={attributionMap[c.id]}
+                              onUpdateCourse={updateCourseFields}
+                            />
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
               );
             })
           )}
@@ -192,6 +254,50 @@ export function SemestersPanel({ completedCourses, planByTerm, setPlanByTerm }) 
 
       {mode === "plan" && (
         <>
+          <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-panel">
+            <h3 className="text-sm font-semibold text-slate-900">Open requirements</h3>
+            <p className="mt-1 text-xs text-muted">
+              Pick a gap to limit search to courses that can satisfy that requirement (from the
+              program catalog rules). Clear the selection to search the full catalog.
+            </p>
+            {gaps.length === 0 ? (
+              <p className="mt-3 text-sm text-slate-500">No open gaps — degree areas look complete.</p>
+            ) : (
+              <ul className="mt-3 flex flex-wrap gap-2">
+                {gaps.map((g) => {
+                  const on = selectedGapId === g.id;
+                  return (
+                    <li key={g.id}>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedGapId((cur) => (cur === g.id ? null : g.id))}
+                        className={`rounded-full border px-3 py-1.5 text-left text-xs font-medium transition ${
+                          on
+                            ? "border-penn bg-penn text-white"
+                            : "border-slate-200 bg-slate-50 text-slate-800 hover:border-slate-300"
+                        }`}
+                      >
+                        <span className="block max-w-[220px] truncate">{g.label}</span>
+                        <span className="num mt-0.5 block text-[10px] font-normal opacity-90">
+                          {g.missing} CU missing
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+            {selectedGapId && (
+              <button
+                type="button"
+                onClick={() => setSelectedGapId(null)}
+                className="mt-3 text-xs font-medium text-penn hover:underline"
+              >
+                Clear requirement filter
+              </button>
+            )}
+          </div>
+
           <div className="grid gap-4 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-panel lg:grid-cols-2">
             <div>
               <label className="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-muted">
@@ -236,7 +342,11 @@ export function SemestersPanel({ completedCourses, planByTerm, setPlanByTerm }) 
                 </select>
               </div>
               <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50/30 p-3">
-                <CourseSearch existing={searchExclude} onAdd={(id) => addPlanned(planIntoTerm, id)} />
+                <CourseSearch
+                  existing={searchExclude}
+                  allowedIds={allowedIdsForSearch}
+                  onAdd={(id) => addPlanned(planIntoTerm, id)}
+                />
               </div>
             </div>
           </div>
@@ -319,7 +429,7 @@ export function SemestersPanel({ completedCourses, planByTerm, setPlanByTerm }) 
                       </h4>
                       {(planByTerm[term] || []).length === 0 ? (
                         <p className="text-sm text-slate-500">
-                          No draft courses. Pick this term on the right and search above to add one.
+                          No draft courses. Pick this term and search above to add one.
                         </p>
                       ) : (
                         <ul className="space-y-2">
@@ -362,5 +472,19 @@ export function SemestersPanel({ completedCourses, planByTerm, setPlanByTerm }) 
         </>
       )}
     </div>
+  );
+}
+
+function Chevron() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="inline">
+      <path
+        d="M6 9l6 6 6-6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }

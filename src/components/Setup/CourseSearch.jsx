@@ -4,15 +4,10 @@ import courses from "../../data/courses.json" with { type: "json" };
 /**
  * CourseSearch — autocomplete for adding individual courses.
  *
- * Implementation notes:
- * - 6,242 courses is small enough to filter in-memory on every keystroke,
- *   but we still debounce by 80ms to keep the input feeling snappy.
- * - Matches against both course id and title, case-insensitive.
- * - Hides courses that are already in the `existing` set so the student
- *   doesn't accidentally add the same course twice.
- * - Click a result to call `onAdd(courseId)` and clear the input.
+ * - `allowedIds`: when a Set, only those course ids may appear (gap filter). `null`/`undefined` = no filter.
+ * - Empty Set while a filter is active yields no matches (and a short hint).
  */
-export function CourseSearch({ existing, onAdd }) {
+export function CourseSearch({ existing, onAdd, allowedIds }) {
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
 
@@ -23,25 +18,28 @@ export function CourseSearch({ existing, onAdd }) {
 
   const existingSet = useMemo(() => new Set(existing), [existing]);
 
-  // Pre-flatten the catalog once. We re-do this if `courses` ever changes,
-  // which it doesn't at runtime.
   const catalog = useMemo(() => Object.values(courses), []);
+
+  const filtering = allowedIds instanceof Set;
+  const filterEmpty = filtering && allowedIds.size === 0;
 
   const results = useMemo(() => {
     const q = debounced.trim().toUpperCase().replace(/\s+/g, "");
     if (q.length < 2) return [];
+    if (filterEmpty) return [];
     const out = [];
     for (const c of catalog) {
       if (existingSet.has(c.id)) continue;
+      if (filtering && !allowedIds.has(c.id)) continue;
       const idMatch = c.id.includes(q);
       const titleMatch = c.title.toUpperCase().includes(q);
       if (idMatch || titleMatch) {
         out.push(c);
-        if (out.length >= 12) break; // cap result list for keyboard scanability
+        if (out.length >= 12) break;
       }
     }
     return out;
-  }, [debounced, catalog, existingSet]);
+  }, [debounced, catalog, existingSet, allowedIds, filtering, filterEmpty]);
 
   return (
     <div className="space-y-2">
@@ -52,6 +50,11 @@ export function CourseSearch({ existing, onAdd }) {
         placeholder="Search by course code or title (e.g. CIS 1100, Calculus, Machine Learning)"
         className="w-full rounded-lg border border-border bg-white px-4 py-3 text-sm placeholder:text-muted focus:border-penn focus:outline-none focus:ring-2 focus:ring-penn/20"
       />
+      {filtering && (
+        <p className="text-[11px] text-muted">
+          Requirement filter active — results limited to courses that match the selected gap.
+        </p>
+      )}
       {results.length > 0 && (
         <ul className="max-h-72 overflow-auto rounded-lg border border-border bg-white shadow-card">
           {results.map((c) => (
@@ -78,7 +81,11 @@ export function CourseSearch({ existing, onAdd }) {
         </ul>
       )}
       {debounced.trim().length >= 2 && results.length === 0 && (
-        <p className="text-sm text-muted">No matching courses.</p>
+        <p className="text-sm text-muted">
+          {filterEmpty
+            ? "No courses in this requirement pool — try clearing the filter."
+            : "No matching courses."}
+        </p>
       )}
     </div>
   );

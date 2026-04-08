@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import courses from "../../data/courses.json" with { type: "json" };
+import { buildAttributionMap } from "../../utils/courseAttributionMap.js";
 
 /**
  * CourseAttribution — how each saved course maps into the requirement tree.
@@ -7,23 +8,7 @@ import courses from "../../data/courses.json" with { type: "json" };
  */
 
 export function CourseAttribution({ completion, completedCourses }) {
-  const attributionMap = useMemo(() => {
-    const map = {};
-    const visit = (node, sectionLabel) => {
-      if (node.satisfiedBy?.length) {
-        for (const id of node.satisfiedBy) {
-          map[id] = { section: sectionLabel, leaf: node.label };
-        }
-      }
-      if (node.children) {
-        for (const c of node.children) visit(c, sectionLabel);
-      }
-    };
-    for (const sec of completion.root.children || []) {
-      visit(sec, sec.label);
-    }
-    return map;
-  }, [completion]);
+  const attributionMap = useMemo(() => buildAttributionMap(completion), [completion]);
 
   const rows = useMemo(() => {
     const list = completedCourses.map((sc) => {
