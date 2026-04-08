@@ -1,16 +1,43 @@
-# React + Vite
+# Penn Advisor
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+LLM-assisted degree planning for Penn undergraduates (MVP: **SEAS BSE Artificial Intelligence**). Students upload a Path Penn transcript PDF or add courses manually; the app runs a local degree audit against `programs.json` + `courses.json` and shows progress on a dashboard.
 
-Currently, two official plugins are available:
+## Quick start (local testing)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+cd penn-advisor
+npm install
+npm run dev
+```
 
-## React Compiler
+Open **http://localhost:5173/**. The app redirects to **`/setup`** until you pick a program and add at least one course, then **`/dashboard`** shows your audit.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+**Suggested user test path**
 
-## Expanding the ESLint configuration
+1. Clear site data for `localhost` (or use **Reset** on the dashboard) to start fresh.
+2. **Program** — select your degree program.
+3. **Courses** — upload an unofficial transcript PDF or use **Search and add**.
+4. **Goals** (optional) — career interests and target graduation.
+5. **Confirm** — save and open the dashboard.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+**Engine smoke tests (terminal)**
+
+```bash
+node scripts/sanity.mjs
+```
+
+**Production build**
+
+```bash
+npm run build
+npm run preview   # optional: serve dist/
+```
+
+## Chat API (Claude)
+
+Serverless chat lives under `api/` and is exercised with **`vercel dev`** (not plain `npm run dev`) so `/api/chat` is proxied. Set `ANTHROPIC_API_KEY` in `.env.local`. See [docs/OVERVIEW.md](docs/OVERVIEW.md) for prompt and tool details.
+
+## Documentation
+
+- [docs/OVERVIEW.md](docs/OVERVIEW.md) — architecture, data shapes, conventions
+- [docs/PLAN.md](docs/PLAN.md) — phase history and status

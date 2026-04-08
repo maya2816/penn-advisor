@@ -4,14 +4,15 @@ import { useStudent } from "../../state/StudentContext.jsx";
 /**
  * Route guard for /dashboard.
  *
- * If there's no student data yet (first-time visitor or post-reset), kick
- * the user to /setup. Otherwise render the children. Lives outside the
- * page itself so the page can assume `completion` is non-null.
+ * Requires both a programId and at least one completed course so
+ * `computeCompletion()` always has valid inputs (avoids a blank page when
+ * localStorage was corrupted or hand-edited).
  */
 export function RequireSetup({ children }) {
-  const { completedCourses } = useStudent();
+  const { programId, completedCourses } = useStudent();
   const location = useLocation();
-  if (!completedCourses || completedCourses.length === 0) {
+  const hasCourses = completedCourses && completedCourses.length > 0;
+  if (!programId || !hasCourses) {
     return <Navigate to="/setup" replace state={{ from: location }} />;
   }
   return children;

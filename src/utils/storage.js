@@ -49,8 +49,23 @@ function remove(key) {
  * @property {Array<{id:string,section?:string,tags?:string[],pinnedSlot?:string}>} completedCourses
  */
 
-/** @returns {StoredStudent | null} */
-export const getStudent = () => read(KEYS.student, null);
+/**
+ * Read student blob. If the record is inconsistent (e.g. courses saved
+ * without a programId), drop it from storage and return null so the UI
+ * never half-hydrates into a blank dashboard.
+ * @returns {StoredStudent | null}
+ */
+export const getStudent = () => {
+  const s = read(KEYS.student, null);
+  if (!s || typeof s !== "object") return null;
+  const programId = s.programId ?? null;
+  const completedCourses = Array.isArray(s.completedCourses) ? s.completedCourses : [];
+  if (completedCourses.length > 0 && !programId) {
+    remove(KEYS.student);
+    return null;
+  }
+  return { ...s, completedCourses, programId };
+};
 
 /** @param {StoredStudent} student */
 export const setStudent = (student) => write(KEYS.student, student);

@@ -28,7 +28,7 @@ Built the read-only dashboard half of Phase 4. Session B (chat advisor + Vercel 
 - `src/components/Layout/RequireSetup.jsx` — route guard
 - `src/state/StudentContext.jsx` — single source of truth, hydrates from localStorage, caches `computeCompletion()` result via useMemo
 - `src/utils/storage.js` — typed localStorage wrapper (5 functions)
-- `src/utils/parser.js` — transcript regex parser, validates against `courses.json`, returns `{found, unknown}`
+- `src/utils/transcriptParser.js` — Path Penn transcript PDF → structured student + courses (`parseTranscriptPdf`)
 - `src/pages/SetupPage.jsx` — 3-step wizard container with horizontal step indicator
 - `src/components/Setup/StepProgram.jsx` — program picker (iterates `programs.json` so multi-program later is zero-touch)
 - `src/components/Setup/StepCourses.jsx` — tabbed paste-or-search input + running list
