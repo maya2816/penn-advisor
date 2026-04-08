@@ -34,10 +34,10 @@ Built the read-only dashboard half of Phase 4. Session B (chat advisor + Vercel 
 - `src/components/Setup/StepCourses.jsx` — tabbed paste-or-search input + running list
 - `src/components/Setup/StepConfirm.jsx` — review screen with stat cards + by-department course list
 - `src/components/Setup/CourseSearch.jsx` — debounced autocomplete against `courses.json`
-- `src/pages/DashboardPage.jsx` — composes Hero + section grid + drawer + chat sidebar slot, with warning-bucketing useMemo
-- `src/components/Dashboard/Hero.jsx` — circular CU ring + 2×2 stat row
+- `src/pages/DashboardPage.jsx` — tabbed dashboard (Overview, Degree, Semesters) + drawer + chat slot
+- `src/components/Dashboard/DashboardOverview.jsx` — glance summary + pace line
 - `src/components/Dashboard/ProgressRing.jsx` — pure SVG, no chart library
-- `src/components/Dashboard/SectionCard.jsx` — single card with progress bar, status pill, inline warning chip
+- `src/components/Dashboard/SectionAccordion.jsx` — expandable requirement row (no warning chips on dashboard)
 - `src/components/Dashboard/SectionDetail.jsx` — slide-out drawer showing leaves + their courses
 - `src/App.jsx` — replaced Vite default with `<BrowserRouter>` + 4 routes + StudentProvider wrap
 - Removed `src/App.css` (Vite default; conflicted with Tailwind)

@@ -16,10 +16,10 @@ export function AppShell({ children }) {
 
   return (
     <div className="flex h-full min-h-screen flex-col bg-canvas">
-      <header className="border-b border-border bg-surface">
-        <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between px-8">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-penn text-white font-bold">
+      <header className="border-b border-slate-200/80 bg-white/90 shadow-sm backdrop-blur-md">
+        <div className="mx-auto flex h-[4.25rem] max-w-[1400px] items-center justify-between px-8">
+          <Link to="/" className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-penn text-sm font-bold text-white shadow-md">
               P
             </div>
             <span className="text-base font-semibold tracking-tight text-slate-900">

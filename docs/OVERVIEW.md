@@ -82,7 +82,7 @@ program requirement tree, and (c) the student's actual transcript.
                                ▼                        ▼
                     ┌──────────────────────┐  ┌──────────────────┐
                     │  Dashboard           │  │  CompletionStatus│
-                    │  (Hero ring,         │◀─│  tree            │
+                    │  (Overview + tabs)    │◀─│  tree            │
                     │   section grid,      │  └──────────────────┘
                     │   warnings, list)    │
                     └──────────┬───────────┘
@@ -169,11 +169,13 @@ penn-advisor/
 │   │   │   ├── StepConfirm.jsx           ← step 3: review with stat cards
 │   │   │   └── CourseSearch.jsx          ← debounced autocomplete
 │   │   ├── Dashboard/
-│   │   │   ├── Hero.jsx                  ← circular CU ring + 2x2 stat row
+│   │   │   ├── DashboardOverview.jsx     ← glance summary + pace line
+│   │   │   ├── DashboardTabBar.jsx       ← Overview / Degree / Semesters
+│   │   │   ├── DegreeRequirementsPanel.jsx + SectionAccordion.jsx
+│   │   │   ├── SemestersPanel.jsx        ← completed vs planned by term
 │   │   │   ├── ProgressRing.jsx          ← pure SVG
-│   │   │   ├── SectionCard.jsx           ← one of the 6 cards
 │   │   │   ├── SectionDetail.jsx         ← slide-out drawer
-│   │   │   └── CourseAttribution.jsx    ← flat list: every course → its assigned slot
+│   │   │   └── CourseAttribution.jsx     ← course → requirement map
 │   │   └── Chat/                         ← empty (Phase 4 Session B)
 │   ├── data/
 │   │   ├── courses.json                  ← flat catalog (12,895 entries, ~5 MB)
@@ -188,7 +190,7 @@ penn-advisor/
 │   │       └── dept_cache/<dept>.html          × 244   (Phase 4 dept pages)
 │   ├── pages/
 │   │   ├── SetupPage.jsx                 ← wizard container, 3 steps
-│   │   └── DashboardPage.jsx             ← Hero + section grid + drawer + chat slot
+│   │   └── DashboardPage.jsx             ← tabbed dashboard + drawer + chat slot
 │   ├── state/
 │   │   └── StudentContext.jsx            ← single source of truth, hydrates from localStorage
 │   └── utils/
@@ -513,28 +515,23 @@ change (memoized).
 
 ## 9. Dashboard (current state)
 
-`src/pages/DashboardPage.jsx` composes:
+`src/pages/DashboardPage.jsx` uses **tabs** (desktop-first):
 
-- **Hero** (`Hero.jsx`) — circular CU progress ring + 2×2 stat grid
-  (sections complete, courses on file, warnings, CUs remaining)
-- **Section grid** — 6 cards (Computing, Math/Sci, AI, Senior Design,
-  Tech Electives, General Electives), each with a progress bar, status
-  pill, and inline warning chip if any prereq violation or mutex
-  conflict touches a course in that section
-- **CourseAttribution** — flat 2-column list of every course the
-  student entered, sorted by section, showing each course's current
-  assignment (or "Unassigned" for courses outside the program)
-- **SectionDetail drawer** — slides in from the right when a section
-  card is clicked, shows each leaf with its progress and the courses
-  filling it
-- **Chat sidebar slot** — currently a placeholder card on the right;
-  reserved layout so the future chat panel doesn't shift the page
+- **Overview** — `DashboardOverview.jsx`: large CU story, plain-language
+  “what’s left,” optional pace line from target graduation, compact transcript
+  identity; **no** warning KPIs on this screen.
+- **Degree requirements** — `DegreeRequirementsPanel.jsx` +
+  `SectionAccordion.jsx`: one expandable row per top-level section; **Open
+  breakdown** opens `SectionDetail`. `CourseAttribution` lives on this tab with
+  neutral styling for unassigned courses.
+- **Semesters** — `SemestersPanel.jsx`: transcript terms as **completed**;
+  `planByTerm` in `StudentContext` as **planned** (draft, not in the engine).
+- **SectionDetail drawer** — same slide-out leaf detail as before (visual polish).
+- **Chat sidebar** — styled placeholder; fixed width so layout is stable.
 
-**Warning bucketing**: the engine emits flat `prereqViolations` and
-`mutexConflicts` arrays with course IDs but no section labels.
-`DashboardPage.jsx` does the bucketing in a `useMemo` — walks the tree
-once to map each course → its consuming section, then counts warnings
-per section card.
+Engine warnings (`prereqViolations`, `mutexConflicts`, soft `warnings`) are
+**not** surfaced on the main dashboard UI (product choice); data remains in
+`CompletionStatus` for future use.
 
 ---
 

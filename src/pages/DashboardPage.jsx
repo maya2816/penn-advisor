@@ -1,108 +1,93 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { AppShell } from "../components/Layout/AppShell.jsx";
-import { Hero } from "../components/Dashboard/Hero.jsx";
-import { SectionCard } from "../components/Dashboard/SectionCard.jsx";
+import { DashboardTabBar } from "../components/Dashboard/DashboardTabBar.jsx";
+import { DashboardOverview } from "../components/Dashboard/DashboardOverview.jsx";
+import { DegreeRequirementsPanel } from "../components/Dashboard/DegreeRequirementsPanel.jsx";
+import { SemestersPanel } from "../components/Dashboard/SemestersPanel.jsx";
 import { SectionDetail } from "../components/Dashboard/SectionDetail.jsx";
-import { CourseAttribution } from "../components/Dashboard/CourseAttribution.jsx";
 import { useStudent } from "../state/StudentContext.jsx";
 
 /**
- * DashboardPage — composes the Hero + 6-card SectionGrid + SectionDetail
- * drawer + chat sidebar slot. Reads the cached `completion` from
- * StudentContext (no engine work happens at render time).
- *
- * Bucketing warnings to sections:
- *   The engine emits flat `prereqViolations` and `mutexConflicts` arrays
- *   with course IDs but no section label. To show "⚠ 2 alerts" on the
- *   right card, we walk the section tree and check which courses each
- *   section's leaves consumed, then count warnings whose course IDs
- *   match. Computed once via useMemo per completion change.
+ * DashboardPage — tabbed layout: Overview | Degree | Semesters; drawer for section detail.
  */
+
 export function DashboardPage() {
-  const { completion, completedCourses, profile } = useStudent();
+  const {
+    completion,
+    completedCourses,
+    profile,
+    planByTerm,
+    setPlanByTerm,
+  } = useStudent();
+  const [tab, setTab] = useState("overview");
   const [openSection, setOpenSection] = useState(null);
 
-  // Map from sectionId → set of course IDs consumed by any leaf in that section.
-  const courseToSection = useMemo(() => {
-    const map = {};
-    if (!completion) return map;
-    for (const sec of completion.root.children || []) {
-      const ids = collectSatisfiedBy(sec);
-      for (const id of ids) {
-        // A course can technically only end up in one section because of
-        // the consumed-set logic in the engine, so first-write-wins is fine.
-        map[id] = sec.id;
-      }
-    }
-    return map;
-  }, [completion]);
-
-  // Map from sectionId → warning count (prereq violations + mutex conflicts).
-  const warningsBySection = useMemo(() => {
-    const counts = {};
-    if (!completion) return counts;
-    for (const v of completion.prereqViolations || []) {
-      const secId = courseToSection[v.courseId];
-      if (secId) counts[secId] = (counts[secId] || 0) + 1;
-    }
-    for (const c of completion.mutexConflicts || []) {
-      const secIdA = courseToSection[c.courseA];
-      const secIdB = courseToSection[c.courseB];
-      // Attribute the conflict to whichever section consumed either course;
-      // dedupe so the same pair isn't counted twice if both halves end up
-      // in the same section.
-      const target = secIdA || secIdB;
-      if (target) counts[target] = (counts[target] || 0) + 1;
-    }
-    return counts;
-  }, [completion, courseToSection]);
-
-  if (!completion) return null; // RequireSetup should make this unreachable
+  if (!completion) return null;
 
   return (
     <AppShell>
-      <div className="grid grid-cols-[1fr_360px] gap-6">
-        <div className="space-y-6">
-          <Hero completion={completion} courseCount={completedCourses.length} profile={profile} />
+      <div className="relative min-h-[calc(100vh-4rem)]">
+        <div
+          className="pointer-events-none absolute inset-0 bg-subtle-radial opacity-70"
+          aria-hidden
+        />
 
-          <div className="grid grid-cols-3 gap-4">
-            {completion.root.children?.map((section) => (
-              <SectionCard
-                key={section.id}
-                section={section}
-                warningCount={warningsBySection[section.id] || 0}
-                onOpen={setOpenSection}
+        <div className="relative grid grid-cols-1 gap-8 xl:grid-cols-[1fr_320px] xl:gap-10">
+          <div className="space-y-8 pb-12">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h1 className="text-sm font-semibold uppercase tracking-[0.2em] text-muted">
+                  Dashboard
+                </h1>
+                <p className="mt-1 text-lg font-medium text-slate-900">Degree planning workspace</p>
+              </div>
+              <DashboardTabBar active={tab} onChange={setTab} />
+            </div>
+
+            {tab === "overview" && (
+              <DashboardOverview
+                completion={completion}
+                courseCount={completedCourses.length}
+                profile={profile}
               />
-            ))}
+            )}
+
+            {tab === "degree" && (
+              <DegreeRequirementsPanel
+                completion={completion}
+                completedCourses={completedCourses}
+                onOpenSection={setOpenSection}
+              />
+            )}
+
+            {tab === "semesters" && (
+              <SemestersPanel
+                completedCourses={completedCourses}
+                planByTerm={planByTerm}
+                setPlanByTerm={setPlanByTerm}
+              />
+            )}
           </div>
 
-          <CourseAttribution
-            completion={completion}
-            completedCourses={completedCourses}
-          />
+          <aside className="xl:sticky xl:top-24 xl:self-start">
+            <div className="overflow-hidden rounded-3xl border border-slate-200/60 bg-gradient-to-b from-white to-penn-50/30 p-8 shadow-lift">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-penn text-lg font-bold text-white shadow-md">
+                P
+              </div>
+              <h2 className="text-lg font-semibold text-slate-900">Advisor chat</h2>
+              <p className="mt-3 text-sm leading-relaxed text-slate-600">
+                A conversational assistant for course questions and planning will connect here. The
+                layout stays fixed so turning it on won&apos;t shift your audit.
+              </p>
+              <div className="mt-6 rounded-2xl border border-dashed border-penn/20 bg-white/60 px-4 py-6 text-center text-xs font-medium text-muted">
+                Coming soon
+              </div>
+            </div>
+          </aside>
         </div>
-
-        <aside className="rounded-2xl border border-border bg-white p-6 shadow-card">
-          <h2 className="text-base font-semibold text-slate-900">Penn Advisor</h2>
-          <p className="mt-2 text-sm text-muted">
-            Chat sidebar arrives in Session B. The slot is reserved here so the layout
-            doesn&apos;t shift when it lands.
-          </p>
-        </aside>
       </div>
 
       <SectionDetail section={openSection} onClose={() => setOpenSection(null)} />
     </AppShell>
   );
-}
-
-/** Recursively collect every satisfiedBy course id under a section. */
-function collectSatisfiedBy(node) {
-  const out = [];
-  const visit = (n) => {
-    if (n.satisfiedBy?.length) out.push(...n.satisfiedBy);
-    if (n.children) for (const c of n.children) visit(c);
-  };
-  visit(node);
-  return out;
 }

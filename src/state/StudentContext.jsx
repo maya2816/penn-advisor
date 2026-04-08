@@ -4,14 +4,8 @@ import { computeCompletion } from "../utils/degreeEngine.js";
 import { getStudent, setStudent as persistStudent, clearAll } from "../utils/storage.js";
 
 /**
- * StudentContext.jsx
- *
- * Role: Single source of truth for primary program, completed courses,
- * optional profile (from transcript), and memoized degree completion.
- *
- * Inputs: localStorage `penn-advisor:student` via storage.js.
- * Outputs: Context value + persistence when programId and ≥1 course exist.
- * Depends on: programs.json (valid major program ids), degreeEngine.
+ * StudentContext.jsx — program, courses, profile, optional planByTerm (dashboard),
+ * memoized completion.
  */
 
 const StudentContext = createContext(null);
@@ -22,6 +16,7 @@ export function StudentProvider({ children }) {
     () => getStudent()?.completedCourses ?? []
   );
   const [profile, setProfile] = useState(() => getStudent()?.profile ?? null);
+  const [planByTerm, setPlanByTerm] = useState(() => getStudent()?.planByTerm ?? {});
 
   useEffect(() => {
     if (programId && !programs[programId]) {
@@ -29,14 +24,15 @@ export function StudentProvider({ children }) {
       setProgramId(null);
       setCompletedCourses([]);
       setProfile(null);
+      setPlanByTerm({});
     }
   }, [programId]);
 
   useEffect(() => {
     if (programId && completedCourses.length > 0) {
-      persistStudent({ programId, completedCourses, profile });
+      persistStudent({ programId, completedCourses, profile, planByTerm });
     }
-  }, [programId, completedCourses, profile]);
+  }, [programId, completedCourses, profile, planByTerm]);
 
   const completion = useMemo(() => {
     if (!programId || completedCourses.length === 0) return null;
@@ -52,16 +48,19 @@ export function StudentProvider({ children }) {
     setProgramId(null);
     setCompletedCourses([]);
     setProfile(null);
+    setPlanByTerm({});
   }, []);
 
   const value = {
     programId,
     completedCourses,
     profile,
+    planByTerm,
     completion,
     setProgramId,
     setCompletedCourses,
     setProfile,
+    setPlanByTerm,
     reset,
   };
 

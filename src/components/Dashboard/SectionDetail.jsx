@@ -34,14 +34,14 @@ export function SectionDetail({ section, onClose }) {
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className="fixed inset-0 z-40 bg-slate-900/30 backdrop-blur-sm"
+        className="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-[2px]"
       />
       {/* Drawer */}
       <aside
-        className="fixed right-0 top-0 z-50 h-full w-[480px] max-w-full overflow-y-auto border-l border-border bg-white shadow-2xl"
+        className="fixed right-0 top-0 z-50 h-full w-[min(100%,480px)] overflow-y-auto border-l border-slate-200/80 bg-white shadow-lift"
         style={{ animation: "slideIn 240ms ease-out" }}
       >
-        <div className="sticky top-0 border-b border-border bg-white px-6 py-5">
+        <div className="sticky top-0 border-b border-slate-100 bg-gradient-to-r from-white to-slate-50/50 px-6 py-5">
           <div className="flex items-start justify-between">
             <div>
               <h2 className="text-xl font-semibold text-slate-900">{section.label}</h2>
@@ -84,7 +84,7 @@ export function SectionDetail({ section, onClose }) {
                         <span
                           key={id}
                           title={c?.title || id}
-                          className="rounded-md bg-success-soft px-2 py-1 font-mono text-[11px] text-success"
+                          className="rounded-lg bg-penn-50 px-2 py-1 font-mono text-[11px] font-medium text-penn"
                         >
                           {id.replace(/^([A-Z]+)/, "$1 ")}
                         </span>
@@ -95,7 +95,7 @@ export function SectionDetail({ section, onClose }) {
 
                 {!isComplete && missing > 0 && (
                   <div className="mt-3 text-xs text-muted">
-                    Need <span className="num font-semibold text-warning">{missing}</span> more CU
+                    Need <span className="num font-semibold text-slate-700">{missing}</span> more CU
                   </div>
                 )}
               </div>

@@ -47,6 +47,15 @@ export default {
       boxShadow: {
         card: "0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.04)",
         "card-hover": "0 4px 12px 0 rgba(15, 23, 42, 0.08)",
+        panel:
+          "0 4px 24px -4px rgba(15, 23, 42, 0.07), 0 2px 8px -2px rgba(15, 23, 42, 0.04)",
+        lift: "0 20px 50px -20px rgba(1, 31, 91, 0.12)",
+      },
+      backgroundImage: {
+        "dashboard-hero":
+          "linear-gradient(135deg, #ffffff 0%, #f1f5f9 45%, #e8ecf5 100%)",
+        "subtle-radial":
+          "radial-gradient(1200px 600px at 10% -10%, rgba(1, 31, 91, 0.06), transparent 55%)",
       },
     },
   },
