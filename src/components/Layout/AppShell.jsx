@@ -27,12 +27,20 @@ export function AppShell({ children }) {
             </span>
           </Link>
           {showReset ? (
-            <Link
-              to="/setup?reset=1"
-              className="rounded-md px-3 py-1.5 text-sm text-muted transition hover:bg-slate-100 hover:text-slate-900"
-            >
-              Reset
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                to="/setup"
+                className="rounded-md px-3 py-1.5 text-sm text-muted transition hover:bg-slate-100 hover:text-slate-900"
+              >
+                Update setup
+              </Link>
+              <Link
+                to="/setup?reset=1"
+                className="rounded-md px-3 py-1.5 text-sm text-muted transition hover:bg-slate-100 hover:text-slate-900"
+              >
+                Reset
+              </Link>
+            </div>
           ) : null}
         </div>
       </header>

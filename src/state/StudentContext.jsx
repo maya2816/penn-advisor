@@ -1,45 +1,50 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import programs from "../data/programs.json" with { type: "json" };
 import { computeCompletion } from "../utils/degreeEngine.js";
 import { getStudent, setStudent as persistStudent, clearAll } from "../utils/storage.js";
 
 /**
- * StudentContext — single source of truth for the student's program,
- * completed courses, identity profile, and the cached
- * `computeCompletion()` result.
+ * StudentContext.jsx
  *
- * Hydrates from localStorage on mount; persists on every change.
- * `completion` is memoized so the engine only re-runs when its
- * inputs actually change.
+ * Role: Single source of truth for primary program, completed courses,
+ * optional profile (from transcript), and memoized degree completion.
  *
- * Stored shape (in localStorage):
- *   {
- *     programId: "SEAS_AI_BSE",
- *     completedCourses: [{ id, semester?, cu?, grade?, inProgress? }, ...],
- *     profile: { name, pennId, program, major, dateIssued, gpa, ... } | null
- *   }
+ * Inputs: localStorage `penn-advisor:student` via storage.js.
+ * Outputs: Context value + persistence when programId and ≥1 course exist.
+ * Depends on: programs.json (valid major program ids), degreeEngine.
  */
 
 const StudentContext = createContext(null);
 
 export function StudentProvider({ children }) {
-  // Hydrate synchronously so first paint already has the right state.
   const [programId, setProgramId] = useState(() => getStudent()?.programId ?? null);
   const [completedCourses, setCompletedCourses] = useState(
     () => getStudent()?.completedCourses ?? []
   );
   const [profile, setProfile] = useState(() => getStudent()?.profile ?? null);
 
-  // Persist on every change.
+  useEffect(() => {
+    if (programId && !programs[programId]) {
+      clearAll();
+      setProgramId(null);
+      setCompletedCourses([]);
+      setProfile(null);
+    }
+  }, [programId]);
+
   useEffect(() => {
     if (programId && completedCourses.length > 0) {
       persistStudent({ programId, completedCourses, profile });
     }
   }, [programId, completedCourses, profile]);
 
-  // Cached completion. Recomputes only when inputs change.
   const completion = useMemo(() => {
     if (!programId || completedCourses.length === 0) return null;
-    return computeCompletion(completedCourses, programId);
+    try {
+      return computeCompletion(completedCourses, programId);
+    } catch {
+      return null;
+    }
   }, [programId, completedCourses]);
 
   const reset = useCallback(() => {

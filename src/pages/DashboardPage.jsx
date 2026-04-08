@@ -19,7 +19,7 @@ import { useStudent } from "../state/StudentContext.jsx";
  *   match. Computed once via useMemo per completion change.
  */
 export function DashboardPage() {
-  const { completion, completedCourses } = useStudent();
+  const { completion, completedCourses, profile } = useStudent();
   const [openSection, setOpenSection] = useState(null);
 
   // Map from sectionId → set of course IDs consumed by any leaf in that section.
@@ -63,7 +63,7 @@ export function DashboardPage() {
     <AppShell>
       <div className="grid grid-cols-[1fr_360px] gap-6">
         <div className="space-y-6">
-          <Hero completion={completion} courseCount={completedCourses.length} />
+          <Hero completion={completion} courseCount={completedCourses.length} profile={profile} />
 
           <div className="grid grid-cols-3 gap-4">
             {completion.root.children?.map((section) => (

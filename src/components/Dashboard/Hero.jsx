@@ -1,16 +1,16 @@
 import { ProgressRing } from "./ProgressRing.jsx";
+import { isTranscriptStale } from "../../utils/dateUtils.js";
 
 /**
- * Hero — top of the dashboard. Big circular CU progress ring on the left,
- * stat row on the right.
+ * Hero.jsx
  *
- * The 4 stat cards are derived from the CompletionStatus tree:
- *   - Total CU done
- *   - Sections complete (e.g. "4 of 6")
- *   - Warnings count (prereq violations + mutex conflicts + soft warnings)
- *   - Course count
+ * Role: Dashboard header — CU ring, stats from CompletionStatus, and optional
+ * transcript-derived profile (name, GPA, earned hours, stale-data hint).
+ *
+ * Inputs: completion, courseCount, profile (from StudentContext, may be null).
  */
-export function Hero({ completion, courseCount }) {
+
+export function Hero({ completion, courseCount, profile }) {
   const sectionCount = completion.root.children?.length ?? 0;
   const sectionsComplete =
     completion.root.children?.filter((c) => c.status === "complete").length ?? 0;
@@ -19,9 +19,11 @@ export function Hero({ completion, courseCount }) {
     (completion.prereqViolations?.length || 0) +
     (completion.mutexConflicts?.length || 0);
 
+  const stale = profile?.dateIssued && isTranscriptStale(profile.dateIssued, 3);
+
   return (
     <div className="rounded-2xl border border-border bg-white p-8 shadow-card">
-      <div className="flex items-center gap-10">
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-10">
         <ProgressRing
           value={completion.totalCuCompleted}
           total={completion.totalCuRequired}
@@ -29,13 +31,45 @@ export function Hero({ completion, courseCount }) {
           stroke={16}
           label="Course Units"
         />
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           <div className="mb-1 text-xs uppercase tracking-wider text-muted">
             {completion.programName}
           </div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
             Your degree progress
           </h1>
+
+          {profile && (profile.name || profile.gpa != null) && (
+            <div className="mt-4 rounded-xl border border-border bg-slate-50/80 px-4 py-3 text-sm">
+              {profile.name && (
+                <div className="font-medium text-slate-900">{profile.name}</div>
+              )}
+              <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-muted">
+                {profile.pennId && <span className="num">Penn ID {profile.pennId}</span>}
+                {profile.gpa != null && (
+                  <span className="num">
+                    GPA <span className="font-semibold text-slate-800">{profile.gpa.toFixed(2)}</span>
+                  </span>
+                )}
+                {profile.earnedHrs != null && (
+                  <span className="num">Earned {profile.earnedHrs} CU</span>
+                )}
+                {profile.inProgressCu != null && profile.inProgressCu > 0 && (
+                  <span className="num text-warning">In progress {profile.inProgressCu} CU</span>
+                )}
+                {profile.dateIssued && (
+                  <span className="num">Transcript {profile.dateIssued}</span>
+                )}
+              </div>
+              {stale && (
+                <p className="mt-2 text-xs font-medium text-warning">
+                  This transcript may be out of date (issued more than 3 months ago). Consider
+                  uploading a fresh copy from Path Penn.
+                </p>
+              )}
+            </div>
+          )}
+
           <div className="mt-5 grid grid-cols-2 gap-3">
             <Stat
               label="Sections complete"
@@ -69,8 +103,8 @@ function Stat({ label, value, tone }) {
     tone === "warning"
       ? "bg-warning-soft text-warning"
       : tone === "success"
-      ? "bg-success-soft text-success"
-      : "bg-slate-50 text-slate-900";
+        ? "bg-success-soft text-success"
+        : "bg-slate-50 text-slate-900";
   return (
     <div className="rounded-xl border border-border bg-white p-3">
       <div className="text-xs uppercase tracking-wider text-muted">{label}</div>

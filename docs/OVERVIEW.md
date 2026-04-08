@@ -482,6 +482,9 @@ Five things make this parser work where naive ones fail:
    subsequent course. This is why the column-aware extraction matters
    so much — semester headers must appear in reading order before their
    courses.
+6. **Retakes** — the parser keeps the **first** row per course id and
+   ignores later rows with the same code. If you need “last grade wins,”
+   change `extractCourses` to replace instead of `continue` on `seen`.
 
 **Result on the test transcript** (`Maya_Kfir_UT_2026-03-26T17_35_32.pdf`):
 32 of 32 courses parsed, 31 in catalog, 1 unknown (`MEAM 4600`, a
@@ -493,7 +496,8 @@ anyway" placeholder UX).
 ```
 StepProgram → setPickedProgram(programId)
 StepCourses → setDraftCourses([{id, semester, cu, grade, inProgress}])
-            → setDraftProfile({name, pennId, gpa, ...})
+            → setDraftProfile({name, pennId, gpa, ...})  // merged on PDF parse
+StepGoals   → optional careerInterests + targetGraduationTerm on profile
 StepConfirm → onConfirm()
             → StudentContext.setProgramId(...)
             → StudentContext.setCompletedCourses(...)

@@ -19,7 +19,10 @@ export function StepConfirm({ courses: added, onBack, onConfirm }) {
     return acc;
   }, {});
 
-  const totalCu = added.reduce((sum, c) => sum + (courses[c.id]?.cu ?? 1), 0);
+  const totalCu = added.reduce(
+    (sum, c) => sum + (c.cu ?? courses[c.id]?.cu ?? 1),
+    0
+  );
   const semesterKeys = Object.keys(bySemester).sort((a, b) => {
     const ka = a === "Manually added" ? Number.POSITIVE_INFINITY : semesterSortKey(a);
     const kb = b === "Manually added" ? Number.POSITIVE_INFINITY : semesterSortKey(b);
@@ -33,7 +36,8 @@ export function StepConfirm({ courses: added, onBack, onConfirm }) {
           Review your courses
         </h2>
         <p className="mt-2 text-sm text-muted">
-          One last look. You can edit these any time after setup.
+          One last look. Use <strong>Update setup</strong> in the header anytime to change your
+          program, courses, or goals.
         </p>
       </div>
 

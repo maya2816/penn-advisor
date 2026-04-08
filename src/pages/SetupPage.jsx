@@ -3,25 +3,27 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { AppShell } from "../components/Layout/AppShell.jsx";
 import { StepProgram } from "../components/Setup/StepProgram.jsx";
 import { StepCourses } from "../components/Setup/StepCourses.jsx";
+import { StepGoals } from "../components/Setup/StepGoals.jsx";
 import { StepConfirm } from "../components/Setup/StepConfirm.jsx";
 import { useStudent } from "../state/StudentContext.jsx";
 
 const STEPS = [
   { key: "program", label: "Program" },
   { key: "courses", label: "Courses" },
+  { key: "goals", label: "Goals" },
   { key: "confirm", label: "Confirm" },
 ];
 
 /**
- * SetupPage — three-step wizard for entering program + completed courses.
+ * SetupPage.jsx
  *
- * Flow:
- *   1. Pick program  →  2. Add courses (paste or search)  →  3. Review & confirm
+ * Role: Multi-step wizard — program, courses (PDF or search), optional goals,
+ * then confirm. Seeds drafts from StudentContext so "Update setup" preserves work.
  *
- * If `?reset=1` is in the URL (the Reset link in AppShell), wipe existing
- * student state on mount before showing step 1. After Confirm, save to
- * StudentContext (which persists to localStorage) and navigate to /dashboard.
+ * Inputs: URL `?reset=1` clears all student state; otherwise hydrates from context.
+ * Outputs: On confirm → writes program, courses, profile → `/dashboard`.
  */
+
 export function SetupPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -35,12 +37,6 @@ export function SetupPage() {
     reset,
   } = useStudent();
 
-  // Local wizard state. We seed from any existing context so a returning
-  // user doesn't lose their work mid-edit.
-  //
-  // Draft shape: Array<{ id: string, semester?: string, cu?: number, grade?: string, inProgress?: boolean }>
-  // — populated by the PDF parser and threaded through to the dashboard
-  // so it can group / display by term and grade later.
   const [stepIdx, setStepIdx] = useState(0);
   const [pickedProgram, setPickedProgram] = useState(programId);
   const [draftCourses, setDraftCourses] = useState(
@@ -50,11 +46,11 @@ export function SetupPage() {
       cu: c.cu,
       grade: c.grade,
       inProgress: c.inProgress,
+      placeholder: c.placeholder,
     }))
   );
   const [draftProfile, setDraftProfile] = useState(profile ?? null);
 
-  // Reset support: ?reset=1 wipes everything before the wizard mounts.
   useEffect(() => {
     if (searchParams.get("reset") === "1") {
       reset();
@@ -66,11 +62,9 @@ export function SetupPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Called when StepCourses successfully parses a transcript PDF — we
-  // capture the rich student identity + totals so the dashboard can
-  // show name, GPA, etc. later.
   const handleParsedTranscript = (transcriptData) => {
-    setDraftProfile({
+    setDraftProfile((prev) => ({
+      ...(prev ?? {}),
       name: transcriptData.student?.name ?? null,
       pennId: transcriptData.student?.pennId ?? null,
       program: transcriptData.student?.program ?? null,
@@ -79,45 +73,46 @@ export function SetupPage() {
       gpa: transcriptData.totals?.gpa ?? null,
       earnedHrs: transcriptData.totals?.earnedHrs ?? null,
       inProgressCu: transcriptData.totals?.inProgressCu ?? null,
-    });
+    }));
   };
 
   const handleConfirm = () => {
     setProgramId(pickedProgram);
     setCompletedCourses(draftCourses);
-    if (draftProfile) setProfile(draftProfile);
+    setProfile(draftProfile ?? null);
     navigate("/dashboard");
   };
 
   return (
     <AppShell>
       <div className="mx-auto max-w-3xl">
-        {/* Step indicator */}
-        <ol className="mb-10 flex items-center justify-center gap-3">
+        <ol className="mb-10 flex flex-wrap items-center justify-center gap-2 md:gap-3">
           {STEPS.map((s, i) => {
             const active = i === stepIdx;
             const done = i < stepIdx;
             return (
-              <li key={s.key} className="flex items-center gap-3">
+              <li key={s.key} className="flex items-center gap-2 md:gap-3">
                 <div
-                  className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition ${
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold transition ${
                     active
                       ? "bg-penn text-white"
                       : done
-                      ? "bg-success text-white"
-                      : "bg-slate-200 text-muted"
+                        ? "bg-success text-white"
+                        : "bg-slate-200 text-muted"
                   }`}
                 >
                   {done ? "✓" : i + 1}
                 </div>
                 <span
-                  className={`text-sm font-medium ${
+                  className={`hidden text-sm font-medium sm:inline ${
                     active ? "text-slate-900" : "text-muted"
                   }`}
                 >
                   {s.label}
                 </span>
-                {i < STEPS.length - 1 && <span className="mx-2 h-px w-12 bg-border" />}
+                {i < STEPS.length - 1 && (
+                  <span className="mx-1 hidden h-px w-8 bg-border md:mx-2 md:inline md:w-12" />
+                )}
               </li>
             );
           })}
@@ -141,9 +136,20 @@ export function SetupPage() {
             />
           )}
           {stepIdx === 2 && (
+            <StepGoals
+              careerInterests={draftProfile?.careerInterests ?? []}
+              targetGraduationTerm={draftProfile?.targetGraduationTerm ?? null}
+              onChange={(patch) =>
+                setDraftProfile((p) => ({ ...(p ?? {}), ...patch }))
+              }
+              onBack={() => setStepIdx(1)}
+              onNext={() => setStepIdx(3)}
+            />
+          )}
+          {stepIdx === 3 && (
             <StepConfirm
               courses={draftCourses}
-              onBack={() => setStepIdx(1)}
+              onBack={() => setStepIdx(2)}
               onConfirm={handleConfirm}
             />
           )}

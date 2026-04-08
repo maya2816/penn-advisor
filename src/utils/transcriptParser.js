@@ -308,6 +308,8 @@ function extractTitle(line, codeStr, cuStr) {
 function extractCourses(text) {
   const lines = text.split("\n");
   const out = [];
+  // Dedupe by normalized course id: first occurrence in PDF reading order wins.
+  // Retakes that appear again under the same code are skipped (not merged).
   const seen = new Set();
   let currentSemester = null;
 

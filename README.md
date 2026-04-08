@@ -33,10 +33,6 @@ npm run build
 npm run preview   # optional: serve dist/
 ```
 
-## Chat API (Claude)
-
-Serverless chat lives under `api/` and is exercised with **`vercel dev`** (not plain `npm run dev`) so `/api/chat` is proxied. Set `ANTHROPIC_API_KEY` in `.env.local`. See [docs/OVERVIEW.md](docs/OVERVIEW.md) for prompt and tool details.
-
 ## Documentation
 
 - [docs/OVERVIEW.md](docs/OVERVIEW.md) — architecture, data shapes, conventions
