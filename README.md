@@ -12,6 +12,28 @@ npm run dev
 
 Open **http://localhost:5173/**. The app redirects to **`/setup`** until you pick a program and add at least one course, then **`/dashboard`** shows your audit.
 
+**Advisor chat (Claude API)**
+
+The dashboard sidebar calls **`POST /api/chat`**, which is implemented as a Vercel serverless function in [`api/chat.js`](api/chat.js). Plain **`npm run dev`** does not serve `/api/*`, so use the Vercel CLI for full-stack local testing:
+
+1. Install [Vercel CLI](https://vercel.com/docs/cli) and log in (`vercel login`).
+2. Copy `.env.example` to `.env.local` and set **`ANTHROPIC_API_KEY`** (from [Anthropic Console](https://console.anthropic.com/)).
+3. From the repo root run (same folder as `.env.local`):
+
+```bash
+vercel dev
+```
+
+Or: **`npm run dev:full`** (same command). Stop **`npm run dev`** first if it is still running so ports are free.
+
+Open the URL Vercel prints (often **http://localhost:3000**). Use that URL for the app—**not** `localhost:5173`—so `/api/chat` and the UI share one origin. Chat history is stored in `localStorage` under `penn-advisor:chat` and is cleared when you use **Reset** on the dashboard.
+
+Optional: set **`ANTHROPIC_CHAT_MODEL`** in `.env.local` to override the default model in `api/chat.js`.
+
+**If chat shows “missing API key” but `.env.local` is set:** `vercel dev` sometimes does not pass `.env.local` into the API process; [`api/chat.js`](api/chat.js) loads `.env.local` from the project root automatically. Restart `vercel dev` after editing env files.
+
+**If chat fails after “typing” with a billing / credits message:** your Anthropic account needs an active plan or credits ([Plans & Billing](https://console.anthropic.com/settings/plans)). The API returns 400 when the balance is too low—the UI will surface that after a server update.
+
 **Suggested user test path**
 
 1. Clear site data for `localhost` (or use **Reset** on the dashboard) to start fresh.

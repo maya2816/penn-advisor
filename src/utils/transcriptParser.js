@@ -67,7 +67,6 @@
 import courses from "../data/courses.json" with { type: "json" };
 
 // Vite-specific: importing with `?url` returns the built asset URL.
-// eslint-disable-next-line import/no-unresolved
 import pdfjsWorkerUrl from "pdfjs-dist/legacy/build/pdf.worker.mjs?url";
 
 // ---------- type definitions (JSDoc) ----------
