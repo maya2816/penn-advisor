@@ -123,6 +123,10 @@ export function SetupPage() {
             <StepProgram
               value={pickedProgram}
               onPick={setPickedProgram}
+              targetGraduationTerm={draftProfile?.targetGraduationTerm ?? null}
+              onTargetGraduationChange={(term) =>
+                setDraftProfile((p) => ({ ...(p ?? {}), targetGraduationTerm: term }))
+              }
               onNext={() => setStepIdx(1)}
             />
           )}
@@ -138,7 +142,7 @@ export function SetupPage() {
           {stepIdx === 2 && (
             <StepGoals
               careerInterests={draftProfile?.careerInterests ?? []}
-              targetGraduationTerm={draftProfile?.targetGraduationTerm ?? null}
+              goalsFreeText={draftProfile?.goalsFreeText ?? ""}
               onChange={(patch) =>
                 setDraftProfile((p) => ({ ...(p ?? {}), ...patch }))
               }

@@ -15,9 +15,9 @@ Open **http://localhost:5173/**. The app redirects to **`/setup`** until you pic
 **Suggested user test path**
 
 1. Clear site data for `localhost` (or use **Reset** on the dashboard) to start fresh.
-2. **Program** — select your degree program.
+2. **Program** — select your degree program and optional target graduation term.
 3. **Courses** — upload an unofficial transcript PDF or use **Search and add**.
-4. **Goals** (optional) — career interests and target graduation.
+4. **Goals** (optional) — interest chips and optional short free-text note for advising context.
 5. **Confirm** — save and open the dashboard.
 
 **Engine smoke tests (terminal)**

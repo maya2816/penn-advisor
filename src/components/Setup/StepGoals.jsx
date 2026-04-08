@@ -1,11 +1,10 @@
 /**
  * StepGoals.jsx
  *
- * Role: Optional wizard step — career interests (≤3) and target graduation
- * term for future chat personalization.
+ * Role: Optional wizard step — up to three career-interest chips plus optional
+ * free-text notes for chat / advising context.
  *
- * Inputs: controlled `careerInterests`, `targetGraduationTerm`, `onChange(patch)`.
- * Output: Next/Back navigation; parent merges patch into draft profile.
+ * Inputs: careerInterests, goalsFreeText, onChange(patch), onBack, onNext.
  */
 
 const OPTIONS = [
@@ -20,14 +19,9 @@ const OPTIONS = [
   "Not sure yet",
 ];
 
-/** @param {{ careerInterests: string[], targetGraduationTerm: string | null, onChange: (p: object) => void, onBack: () => void, onNext: () => void }} props */
-export function StepGoals({
-  careerInterests,
-  targetGraduationTerm,
-  onChange,
-  onBack,
-  onNext,
-}) {
+const FREE_TEXT_MAX = 500;
+
+export function StepGoals({ careerInterests, goalsFreeText, onChange, onBack, onNext }) {
   const selected = new Set(careerInterests || []);
 
   const toggle = (label) => {
@@ -37,6 +31,8 @@ export function StepGoals({
     onChange({ careerInterests: [...next] });
   };
 
+  const text = goalsFreeText ?? "";
+
   return (
     <div className="space-y-6">
       <div>
@@ -44,7 +40,8 @@ export function StepGoals({
           Goals (optional)
         </h2>
         <p className="mt-2 text-sm text-muted">
-          Helps the advisor tailor suggestions. Pick up to three interests, or skip.
+          Helps the advisor tailor suggestions. Pick up to three interests, add a short note if
+          you like, or skip.
         </p>
       </div>
 
@@ -74,25 +71,26 @@ export function StepGoals({
       </div>
 
       <div>
-        <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted">
-          Target graduation
-        </label>
-        <select
-          value={targetGraduationTerm || ""}
-          onChange={(e) =>
-            onChange({
-              targetGraduationTerm: e.target.value || null,
-            })
-          }
-          className="w-full max-w-md rounded-lg border border-border bg-white px-3 py-2 text-sm text-slate-900"
+        <label
+          htmlFor="goals-free-text"
+          className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted"
         >
-          <option value="">Prefer not to say</option>
-          {GRAD_TERM_OPTIONS.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
+          Anything else? (optional)
+        </label>
+        <textarea
+          id="goals-free-text"
+          value={text}
+          maxLength={FREE_TEXT_MAX}
+          rows={4}
+          placeholder="e.g. Interested in a stats minor, prefer morning classes, considering study abroad…"
+          onChange={(e) => onChange({ goalsFreeText: e.target.value.slice(0, FREE_TEXT_MAX) })}
+          className="w-full resize-y rounded-lg border border-border bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-muted focus:border-penn focus:outline-none focus:ring-2 focus:ring-penn/20"
+        />
+        <div className="mt-1 flex justify-end text-xs text-muted">
+          <span className="num">
+            {text.length} / {FREE_TEXT_MAX}
+          </span>
+        </div>
       </div>
 
       <div className="flex items-center justify-between">
@@ -114,17 +112,3 @@ export function StepGoals({
     </div>
   );
 }
-
-/** Next several Spring/Fall pairs from the current calendar year */
-function buildGradTerms() {
-  const y = new Date().getFullYear();
-  const terms = [];
-  for (let i = 0; i < 8; i++) {
-    const yy = y + Math.floor(i / 2);
-    const term = i % 2 === 0 ? "Spring" : "Fall";
-    terms.push(`${term} ${yy}`);
-  }
-  return terms;
-}
-
-const GRAD_TERM_OPTIONS = buildGradTerms();

@@ -1,12 +1,22 @@
 import programs from "../../data/programs.json" with { type: "json" };
+import { GRAD_TERM_OPTIONS } from "../../utils/graduationTerms.js";
 
 /**
- * StepProgram — pick which degree program you're in.
+ * StepProgram.jsx
  *
- * The MVP only ships SEAS_AI_BSE, but we iterate over `programs.json` so
- * adding more programs in a future phase is zero-touch UI work.
+ * Role: Pick primary degree program + optional target graduation term.
+ * (Graduation lives here so path length and chat context are anchored early.)
+ *
+ * Inputs: value (programId), targetGraduationTerm, onPick, onTargetGraduationChange, onNext.
  */
-export function StepProgram({ value, onPick, onNext }) {
+
+export function StepProgram({
+  value,
+  onPick,
+  targetGraduationTerm,
+  onTargetGraduationChange,
+  onNext,
+}) {
   const entries = Object.values(programs);
 
   return (
@@ -49,6 +59,27 @@ export function StepProgram({ value, onPick, onNext }) {
             </button>
           );
         })}
+      </div>
+
+      <div>
+        <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted">
+          Target graduation (optional)
+        </label>
+        <select
+          value={targetGraduationTerm || ""}
+          onChange={(e) => onTargetGraduationChange(e.target.value || null)}
+          className="w-full max-w-md rounded-lg border border-border bg-white px-3 py-2 text-sm text-slate-900"
+        >
+          <option value="">Prefer not to say</option>
+          {GRAD_TERM_OPTIONS.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
+        </select>
+        <p className="mt-1.5 text-xs text-muted">
+          Used for timeline hints later (e.g. how many semesters you have left), not for the degree audit.
+        </p>
       </div>
 
       <div className="flex justify-end">

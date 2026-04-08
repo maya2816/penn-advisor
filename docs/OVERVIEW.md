@@ -494,10 +494,10 @@ anyway" placeholder UX).
 ### 8.3 Wizard data flow
 
 ```
-StepProgram → setPickedProgram(programId)
+StepProgram → setPickedProgram(programId) + optional targetGraduationTerm on profile
 StepCourses → setDraftCourses([{id, semester, cu, grade, inProgress}])
             → setDraftProfile({name, pennId, gpa, ...})  // merged on PDF parse
-StepGoals   → optional careerInterests + targetGraduationTerm on profile
+StepGoals   → optional careerInterests + goalsFreeText on profile
 StepConfirm → onConfirm()
             → StudentContext.setProgramId(...)
             → StudentContext.setCompletedCourses(...)
