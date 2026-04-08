@@ -4,7 +4,6 @@
 
 const TABS = [
   { id: "overview", label: "Overview" },
-  { id: "degree", label: "Degree requirements" },
   { id: "semesters", label: "Semesters" },
 ];
 

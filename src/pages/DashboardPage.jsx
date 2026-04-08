@@ -4,23 +4,15 @@ import { DashboardTabBar } from "../components/Dashboard/DashboardTabBar.jsx";
 import { DashboardOverview } from "../components/Dashboard/DashboardOverview.jsx";
 import { DegreeRequirementsPanel } from "../components/Dashboard/DegreeRequirementsPanel.jsx";
 import { SemestersPanel } from "../components/Dashboard/SemestersPanel.jsx";
-import { SectionDetail } from "../components/Dashboard/SectionDetail.jsx";
 import { useStudent } from "../state/StudentContext.jsx";
 
 /**
- * DashboardPage — tabbed layout: Overview | Degree | Semesters; drawer for section detail.
+ * DashboardPage — Overview (summary + degree audit) | Semesters.
  */
 
 export function DashboardPage() {
-  const {
-    completion,
-    completedCourses,
-    profile,
-    planByTerm,
-    setPlanByTerm,
-  } = useStudent();
+  const { completion, completedCourses, profile, planByTerm, setPlanByTerm } = useStudent();
   const [tab, setTab] = useState("overview");
-  const [openSection, setOpenSection] = useState(null);
 
   if (!completion) return null;
 
@@ -45,19 +37,17 @@ export function DashboardPage() {
             </div>
 
             {tab === "overview" && (
-              <DashboardOverview
-                completion={completion}
-                courseCount={completedCourses.length}
-                profile={profile}
-              />
-            )}
-
-            {tab === "degree" && (
-              <DegreeRequirementsPanel
-                completion={completion}
-                completedCourses={completedCourses}
-                onOpenSection={setOpenSection}
-              />
+              <div className="space-y-10">
+                <DashboardOverview
+                  completion={completion}
+                  courseCount={completedCourses.length}
+                  profile={profile}
+                />
+                <DegreeRequirementsPanel
+                  completion={completion}
+                  completedCourses={completedCourses}
+                />
+              </div>
             )}
 
             {tab === "semesters" && (
@@ -86,8 +76,6 @@ export function DashboardPage() {
           </aside>
         </div>
       </div>
-
-      <SectionDetail section={openSection} onClose={() => setOpenSection(null)} />
     </AppShell>
   );
 }

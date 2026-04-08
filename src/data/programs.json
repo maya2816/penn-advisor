@@ -39,30 +39,34 @@
         {
           "id": "ai",
           "label": "Artificial Intelligence",
-          "min_cu": 12,
-          "note": "12 CU total. At least 1 CU from each of 6 categories. One course cannot satisfy multiple categories.",
+          "min_cu": 6,
+          "note": "6 CU. At least 1 CU from each of 6 categories. One course cannot satisfy multiple categories.",
           "children": [
             { "id": "ai.intro",   "label": "Introduction to AI",   "min_cu": 1, "exclusive": true, "from": { "course_ids": ["CIS4210","CIS5210","ESE2000"] } },
             { "id": "ai.ml",      "label": "Machine Learning",    "min_cu": 1, "exclusive": true, "from": { "course_ids": ["CIS4190","CIS5190","CIS5200"] } },
             { "id": "ai.signals", "label": "Signals & Systems",   "min_cu": 1, "exclusive": true, "from": { "course_ids": ["ESE2100","ESE2240"] } },
             { "id": "ai.opt",     "label": "Optimization & Control", "min_cu": 1, "exclusive": true, "from": { "course_ids": ["ESE3040","ESE4210"] } },
             { "id": "ai.vislang", "label": "Vision & Language",   "min_cu": 1, "exclusive": true, "from": { "course_ids": ["CIS4300","CIS5300","CIS4810","CIS5810"] } },
-            { "id": "ai.project", "label": "AI Project",          "min_cu": 1, "exclusive": true, "from": { "course_ids": ["CIS3500","CIS4300","CIS5300","CIS4810","CIS5810","ESE3060","ESE3600","ESE4210","NETS2120","NETS2130"] } },
-            { "id": "ai.electives", "label": "AI Electives",      "min_cu": 6, "exclusive": true,
-              "note": "Remaining CUs from any of the 6 categories above OR from the AI Electives list.",
-              "from": { "course_ids": [
-                "CIS4210","CIS5210","ESE2000",
-                "CIS4190","CIS5190","CIS5200",
-                "ESE2100","ESE2240",
-                "ESE3040","ESE4210",
-                "CIS4300","CIS5300","CIS4810","CIS5810",
-                "CIS3500","ESE3060","ESE3600","NETS2120","NETS2130",
-                "CIS3333","CIS6200","CIS6250","ESE4380","ESE5380","ESE5140","ESE5460","ESE6450","ESE6740","CIS4270","CIS5270",
-                "ESE3030","ESE5000","ESE5050","ESE5060","ESE6050","ESE6060","ESE6180","ESE6190",
-                "BE5210","CIS4120","CIS5120","CIS4500","CIS5500","CIS5360","CIS5800","CIS6500","MEAM5200","MEAM6200","ESE4040","ESE6150","ESE6500","ESE6510","NETS3120","NETS4120"
-              ] }
-            }
+            { "id": "ai.project", "label": "AI Project",          "min_cu": 1, "exclusive": true, "from": { "course_ids": ["CIS3500","CIS4300","CIS5300","CIS4810","CIS5810","ESE3060","ESE3600","ESE4210","NETS2120","NETS2130"] } }
           ]
+        },
+        {
+          "id": "ai.electives",
+          "label": "AI Electives",
+          "min_cu": 6,
+          "exclusive": true,
+          "note": "6 CU from any of the 6 AI categories above OR from the AI Electives list.",
+          "from": { "course_ids": [
+            "CIS4210","CIS5210","ESE2000",
+            "CIS4190","CIS5190","CIS5200",
+            "ESE2100","ESE2240",
+            "ESE3040","ESE4210",
+            "CIS4300","CIS5300","CIS4810","CIS5810",
+            "CIS3500","ESE3060","ESE3600","NETS2120","NETS2130",
+            "CIS3333","CIS6200","CIS6250","ESE4380","ESE5380","ESE5140","ESE5460","ESE6450","ESE6740","CIS4270","CIS5270",
+            "ESE3030","ESE5000","ESE5050","ESE5060","ESE6050","ESE6060","ESE6180","ESE6190",
+            "BE5210","CIS4120","CIS5120","CIS4500","CIS5500","CIS5360","CIS5800","CIS6500","MEAM5200","MEAM6200","ESE4040","ESE6150","ESE6500","ESE6510","NETS3120","NETS4120"
+          ] }
         },
         {
           "id": "senior_design",

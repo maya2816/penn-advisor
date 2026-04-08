@@ -109,9 +109,12 @@ export function computeCompletion(completedCourses, programId) {
   // didn't repeat them.
   const studentCourses = completedCourses.map((sc) => {
     const cat = getCourse(sc.id);
+    const transcriptCu = Number(sc.cu);
+    const cu =
+      Number.isFinite(transcriptCu) && transcriptCu > 0 ? transcriptCu : (cat?.cu ?? 1);
     return {
       id: sc.id,
-      cu: cat?.cu ?? 1,
+      cu,
       level: cat?.level ?? 0,
       title: cat?.title ?? sc.id,
       section: sc.section,

@@ -30420,7 +30420,7 @@
   "CIS1902": {
     "id": "CIS1902",
     "title": "Python Programming",
-    "cu": 1,
+    "cu": 0.5,
     "level": 1000,
     "attributes": [
       "TECH_ELECTIVE"
