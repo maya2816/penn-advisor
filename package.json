@@ -1,7 +1,8 @@
 {
   "name": "penn-advisor",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "Intelligent degree-planning tool for Penn undergraduates — transcript parsing, degree audit, near-miss minor detection, and an AI chat advisor powered by Penn Course Review data.",
   "type": "module",
   "scripts": {
     "dev": "vite",

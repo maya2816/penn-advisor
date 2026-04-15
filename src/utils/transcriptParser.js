@@ -84,8 +84,8 @@ import pdfjsWorkerUrl from "pdfjs-dist/legacy/build/pdf.worker.mjs?url";
 
 /**
  * @typedef {Object} TranscriptStudent
- * @property {string|null} name      e.g. "Maya Kfir"
- * @property {string|null} pennId    e.g. "22194222"
+ * @property {string|null} name      e.g. "Jane Doe"
+ * @property {string|null} pennId    e.g. "12345678"
  * @property {string|null} program   e.g. "School of Engineering and Applied Science - Bachelor of Science in Engineering"
  * @property {string|null} major     e.g. "Artificial Intelligence"
  * @property {string|null} dateIssued
