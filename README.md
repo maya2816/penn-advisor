@@ -2,6 +2,8 @@
 
 An intelligent degree-planning tool for University of Pennsylvania undergraduates. Upload your Penn transcript, see exactly where you stand in your degree, discover minors you're close to completing, and chat with an AI advisor grounded in your actual academic record.
 
+**Try it live:** [penn-advisor-sigma.vercel.app](https://penn-advisor-sigma.vercel.app)
+
 ## What it does
 
 Penn students currently piece together their degree picture manually — checking requirements across multiple systems, missing cross-listed equivalencies, and discovering too late that they were one course from a minor. Penn Advisor solves this by combining Penn's course data with a local degree audit engine and an LLM advisor layer.
