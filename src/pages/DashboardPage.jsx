@@ -17,7 +17,6 @@ export function DashboardPage() {
     completion,
     programId,
     completedCourses,
-    setCompletedCourses,
     profile,
     planByTerm,
     setPlanByTerm,
@@ -57,6 +56,7 @@ export function DashboardPage() {
                   <DegreeRequirementsPanel
                     completion={completion}
                     completedCourses={completedCourses}
+                    programId={programId}
                   />
                 </div>
               )}
@@ -66,9 +66,9 @@ export function DashboardPage() {
                   completion={completion}
                   programId={programId}
                   completedCourses={completedCourses}
-                  setCompletedCourses={setCompletedCourses}
                   planByTerm={planByTerm}
                   setPlanByTerm={setPlanByTerm}
+                  profile={profile}
                 />
               )}
             </div>

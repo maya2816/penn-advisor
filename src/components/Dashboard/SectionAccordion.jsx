@@ -1,9 +1,15 @@
 /**
  * SectionAccordion — one requirement area; expand for progress bar + inline leaf breakdown.
+ *
+ * Each course code in a leaf's satisfied-by list is now a button that opens
+ * the inline CourseAssignmentPopover (same component used on the Semesters
+ * tab). The student can re-pin a course or mark it as extra without
+ * leaving the Overview tab.
  */
 
-import { useMemo } from "react";
+import { useMemo, useRef, useState } from "react";
 import courses from "../../data/courses.json" with { type: "json" };
+import { CourseAssignmentPopover } from "./CourseAssignmentPopover.jsx";
 
 function formatCourseCode(id) {
   return id.replace(/^([A-Z]+)/, "$1 ");
@@ -41,7 +47,7 @@ const leafAccent = {
   unmet: "border-l-amber-500/70",
 };
 
-export function SectionAccordion({ section, expanded, onToggle, completedCourses }) {
+export function SectionAccordion({ section, expanded, onToggle, completedCourses, programId }) {
   const pct = section.requiredCu > 0 ? Math.min(1, section.completedCu / section.requiredCu) : 0;
   const sectionMissing = Math.max(0, section.requiredCu - section.completedCu);
 
@@ -129,22 +135,13 @@ export function SectionAccordion({ section, expanded, onToggle, completedCourses
                   {ids.length > 0 && (
                     <ul className="mt-2 space-y-1">
                       {ids.map((id) => (
-                        <li
+                        <LeafCourseRow
                           key={id}
-                          className={`flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 border-l-2 pl-2.5 py-1.5 ${accent} rounded-r-md hover:bg-white/60`}
-                        >
-                          <div className="min-w-0">
-                            <span className="font-mono text-xs font-semibold text-penn">
-                              {formatCourseCode(id)}
-                            </span>
-                            <p className="mt-0.5 text-xs leading-snug text-slate-600">
-                              {resolveTitle(id)}
-                            </p>
-                          </div>
-                          <span className="num shrink-0 text-xs font-medium tabular-nums text-slate-600">
-                            {resolveCu(id, byId)} CU
-                          </span>
-                        </li>
+                          id={id}
+                          accent={accent}
+                          courseObj={byId[id]}
+                          programId={programId}
+                        />
                       ))}
                     </ul>
                   )}
@@ -162,6 +159,67 @@ export function SectionAccordion({ section, expanded, onToggle, completedCourses
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * One course inside a leaf's satisfied-by list. The course code is a
+ * button — click it to open the inline assignment popover. We isolate
+ * this in its own component so each row can own its own popover state
+ * and anchor ref without re-rendering the whole accordion on toggle.
+ */
+function LeafCourseRow({ id, accent, courseObj, programId }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  return (
+    <li
+      className={`flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 border-l-2 pl-2.5 py-1.5 ${accent} rounded-r-md hover:bg-white/60`}
+    >
+      <div className="min-w-0">
+        <button
+          ref={ref}
+          type="button"
+          onClick={() => courseObj && setOpen((v) => !v)}
+          disabled={!courseObj}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          title={courseObj ? "Click to change where this course counts" : undefined}
+          className="group inline-flex items-center gap-1 rounded-md px-1 py-0.5 font-mono text-xs font-semibold text-penn transition hover:bg-penn-50 focus:outline-none focus:ring-2 focus:ring-penn/30 disabled:cursor-default disabled:hover:bg-transparent"
+        >
+          <span>{formatCourseCode(id)}</span>
+          {courseObj && (
+            <svg
+              width="10"
+              height="10"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100"
+              aria-hidden
+            >
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          )}
+        </button>
+        <p className="mt-0.5 text-xs leading-snug text-slate-600">{resolveTitle(id)}</p>
+      </div>
+      <span className="num shrink-0 text-xs font-medium tabular-nums text-slate-600">
+        {resolveCu(id, { [id]: courseObj })} CU
+      </span>
+      {courseObj && (
+        <CourseAssignmentPopover
+          course={courseObj}
+          programId={programId}
+          anchorRef={ref}
+          open={open}
+          onClose={() => setOpen(false)}
+        />
+      )}
+    </li>
   );
 }
 

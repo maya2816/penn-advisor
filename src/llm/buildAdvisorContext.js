@@ -3,9 +3,9 @@
  */
 
 import { compareSemesterLabels } from "../utils/semesterOrder.js";
+import { findHiddenOpportunities } from "../utils/nearMissAnalyzer.js";
 
 const LIMITATIONS =
-  "Minors and second majors are not modeled; only one degree program is loaded in programs.json. " +
   "Course offerings by semester (Fall/Spring) are not in this data—multi-semester plans are tentative and not registration advice.";
 
 const MAX_STUDENT_COURSE_SUMMARY = 20;
@@ -91,5 +91,23 @@ export function buildAdvisorContext({ completion, completedCourses, profile, pla
           targetGraduationTerm: profile.targetGraduationTerm ?? null,
         }
       : null,
+    // Pre-computed hint so the LLM knows it's worth calling the tool
+    // without the student explicitly asking about minors.
+    opportunitiesHint: (() => {
+      try {
+        const opps = findHiddenOpportunities({ completedCourses });
+        const count = opps.nearMissMinors.length;
+        const qualified = opps.nearMissMinors.filter((m) => m.cuShortBy === 0);
+        const nearMiss = opps.nearMissMinors.filter((m) => m.cuShortBy > 0 && m.cuShortBy <= 2);
+        const parts = [];
+        if (qualified.length > 0) parts.push(`${qualified.length} minor(s) ALREADY QUALIFIED FOR`);
+        if (nearMiss.length > 0) parts.push(`${nearMiss.length} minor(s) within 1-2 courses`);
+        return count > 0
+          ? `${count} near-miss minors detected (${parts.join(", ")}). Call find_hidden_opportunities for details.`
+          : "No near-miss minors detected.";
+      } catch {
+        return null;
+      }
+    })(),
   };
 }

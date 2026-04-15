@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 
 import Anthropic from "@anthropic-ai/sdk";
 import { buildSystemPrompt } from "../src/llm/systemPrompt.js";
+import { findHiddenOpportunities } from "../src/utils/nearMissAnalyzer.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -123,6 +124,11 @@ function lookupCourse(course_id) {
       title: course.title,
       cu: course.cu,
       level: course.level,
+      description: course.description || null,
+      courseQuality: course.courseQuality ?? null,
+      difficulty: course.difficulty ?? null,
+      workRequired: course.workRequired ?? null,
+      instructorQuality: course.instructorQuality ?? null,
       prerequisites: course.prerequisites || [],
       mutuallyExclusive: course.mutuallyExclusive || [],
       attributes: course.attributes || [],
@@ -132,10 +138,45 @@ function lookupCourse(course_id) {
   };
 }
 
+async function lookupCourseReviews(course_id) {
+  const pcrToken = process.env.PCR_TOKEN;
+  if (!pcrToken) {
+    return {
+      available: false,
+      message:
+        "Deep review data requires a Penn Labs token (PCR_TOKEN). Basic ratings (difficulty, workload, courseQuality, instructorQuality) are already available via the lookup_course tool.",
+    };
+  }
+  const id = normalizeCourseId(course_id);
+  const pcrId = id.replace(/^([A-Z]+)(\d)/, "$1-$2");
+  const url = `https://penncoursereview.com/api/review/course/${pcrId}`;
+  try {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${pcrToken}`, Accept: "application/json" },
+    });
+    if (!res.ok) {
+      return { available: false, message: `Penn Labs API returned HTTP ${res.status}` };
+    }
+    const data = await res.json();
+    return {
+      available: true,
+      courseCode: data.code,
+      name: data.name,
+      latestSemester: data.latest_semester,
+      numSemesters: data.num_semesters,
+      aliases: data.aliases || [],
+      averageReviews: data.average_reviews || null,
+      recentReviews: data.recent_reviews || null,
+    };
+  } catch (err) {
+    return { available: false, message: `Network error: ${err.message}` };
+  }
+}
+
 const LOOKUP_COURSE_TOOL = {
   name: "lookup_course",
   description:
-    "Look up one course in the Penn catalog snapshot by id (e.g. CIS1210, MATH1410). Use for title, CU, prerequisites, mutual exclusions, attributes, and tech elective status.",
+    "Look up one course in the Penn catalog by id (e.g. CIS1210, MATH1410). Returns title, CU, description, difficulty (0-4), workload (0-4), course quality (0-4), instructor quality (0-4), prerequisites, mutual exclusions, attributes, and tech elective status. Use this first for any course question.",
   input_schema: {
     type: "object",
     properties: {
@@ -145,6 +186,32 @@ const LOOKUP_COURSE_TOOL = {
       },
     },
     required: ["course_id"],
+  },
+};
+
+const LOOKUP_REVIEWS_TOOL = {
+  name: "lookup_course_reviews",
+  description:
+    "Fetch deep review aggregates for a course from Penn Course Review (requires Penn Labs token). Returns 15+ review metrics (average and recent), instructor breakdowns, aliases, and historical offering data. Use this when the student asks for detailed review information beyond the basic difficulty/workload from lookup_course.",
+  input_schema: {
+    type: "object",
+    properties: {
+      course_id: {
+        type: "string",
+        description: "Course id without spaces, e.g. CIS1210",
+      },
+    },
+    required: ["course_id"],
+  },
+};
+
+const FIND_OPPORTUNITIES_TOOL = {
+  name: "find_hidden_opportunities",
+  description:
+    "Analyze the student's completed courses against all known Penn minors to find hidden opportunities. Returns near-miss minors (minors the student is 0-3 CU from completing, with specific course suggestions to finish each one). CALL THIS PROACTIVELY when the student asks anything like 'what am I close to?', 'am I missing anything?', 'what should I take?', 'help me plan', 'what minors can I get?', or any question about optimizing their course choices. This is the most valuable tool for showing students opportunities they didn't know they had.",
+  input_schema: {
+    type: "object",
+    properties: {},
   },
 };
 
@@ -243,7 +310,7 @@ export default async function handler(req, res) {
         max_tokens: 4096,
         system,
         messages: anthropicMessages,
-        tools: [LOOKUP_COURSE_TOOL],
+        tools: [LOOKUP_COURSE_TOOL, LOOKUP_REVIEWS_TOOL, FIND_OPPORTUNITIES_TOOL],
       });
 
       stream.on("text", (delta) => {
@@ -270,6 +337,15 @@ export default async function handler(req, res) {
         if (block.name === "lookup_course") {
           const input = block.input || {};
           result = lookupCourse(input.course_id);
+        } else if (block.name === "lookup_course_reviews") {
+          const input = block.input || {};
+          result = await lookupCourseReviews(input.course_id);
+        } else if (block.name === "find_hidden_opportunities") {
+          // Pull the student's courses from the advisor context
+          // that was injected into the system prompt.
+          const ctx = body?.advisorContext;
+          const completedCourses = (ctx?.completedCourseIds || []).map((id) => ({ id }));
+          result = findHiddenOpportunities({ completedCourses });
         } else {
           result = { error: "Unknown tool" };
         }

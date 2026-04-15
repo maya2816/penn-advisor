@@ -1,1 +1,139 @@
-{}
+{
+  "_note": "Minor requirement trees modeled from the Penn 2025-26 catalog. Same Requirement schema as programs.json so the engine/analyzer can walk them with the same code. These are SIMPLIFIED for the demo — exact requirements should be verified against the official catalog pages for each minor.",
+
+  "MATH_MINOR": {
+    "minor_id": "MATH_MINOR",
+    "name": "Mathematics Minor",
+    "school": "SAS",
+    "catalog_year": "2025-26",
+    "total_cu": 6,
+    "requirement": {
+      "id": "math_minor_root",
+      "label": "Mathematics Minor",
+      "min_cu": 6,
+      "children": [
+        { "id": "mm.calc1", "label": "Calculus I", "min_cu": 1, "from": { "course_ids": ["MATH1400"] } },
+        { "id": "mm.calc2", "label": "Calculus II", "min_cu": 1, "from": { "course_ids": ["MATH1410","MATH1510","MATH1610"] } },
+        { "id": "mm.calc3", "label": "Calculus III", "min_cu": 1, "from": { "course_ids": ["MATH2400"] } },
+        {
+          "id": "mm.electives",
+          "label": "Math Electives (3 CU from approved list)",
+          "min_cu": 3,
+          "from": { "course_ids": [
+            "MATH2410","MATH3120","MATH3130","MATH3140","MATH3200","MATH3400","MATH3410",
+            "MATH3500","MATH3600","MATH3610","MATH3700","MATH3710","MATH4100","MATH4200",
+            "MATH4250","MATH4320","MATH4600","MATH4650","MATH5020","MATH5030","MATH5080",
+            "MATH5090","MATH5300","MATH5460",
+            "STAT4300","STAT4310","STAT4320","STAT4330","STAT5100",
+            "ECON2300","ECON2310",
+            "ESE3010","ESE4020","ESE5300","ESE6740",
+            "ENM5030",
+            "CIS2620","CIS1600"
+          ] }
+        }
+      ]
+    }
+  },
+
+  "CS_MINOR": {
+    "minor_id": "CS_MINOR",
+    "name": "Computer Science Minor",
+    "school": "SEAS",
+    "catalog_year": "2025-26",
+    "total_cu": 6,
+    "requirement": {
+      "id": "cs_minor_root",
+      "label": "Computer Science Minor",
+      "min_cu": 6,
+      "children": [
+        { "id": "csm.cis1100", "label": "CIS 1100", "min_cu": 1, "from": { "course_ids": ["CIS1100"] } },
+        { "id": "csm.cis1200", "label": "CIS 1200", "min_cu": 1, "from": { "course_ids": ["CIS1200"] } },
+        { "id": "csm.cis1210", "label": "CIS 1210", "min_cu": 1, "from": { "course_ids": ["CIS1210"] } },
+        { "id": "csm.cis1600", "label": "CIS 1600", "min_cu": 1, "from": { "course_ids": ["CIS1600"] } },
+        {
+          "id": "csm.electives",
+          "label": "CIS Electives (2 CU at 2000+ level)",
+          "min_cu": 2,
+          "from": { "course_ids": [
+            "CIS2330","CIS2400","CIS2450","CIS2620",
+            "CIS3200","CIS3310","CIS3333","CIS3410","CIS3500","CIS3980",
+            "CIS4120","CIS4190","CIS4210","CIS4230","CIS4270","CIS4300",
+            "CIS4410","CIS4500","CIS4510","CIS4550","CIS4600","CIS4610","CIS4810",
+            "CIS5000","CIS5020","CIS5050","CIS5120","CIS5190","CIS5200","CIS5210",
+            "CIS5220","CIS5230","CIS5270","CIS5300","CIS5360","CIS5450","CIS5490",
+            "CIS5500","CIS5510","CIS5520","CIS5530","CIS5550","CIS5560","CIS5590",
+            "CIS5650","CIS5660","CIS5800","CIS5810",
+            "NETS2120","NETS2130","NETS3120","NETS4120"
+          ] }
+        }
+      ]
+    }
+  },
+
+  "DATASCI_MINOR": {
+    "minor_id": "DATASCI_MINOR",
+    "name": "Data Science Minor",
+    "school": "SEAS",
+    "catalog_year": "2025-26",
+    "total_cu": 6,
+    "requirement": {
+      "id": "ds_minor_root",
+      "label": "Data Science Minor",
+      "min_cu": 6,
+      "children": [
+        { "id": "dsm.programming", "label": "Programming Foundation", "min_cu": 1, "from": { "course_ids": ["CIS1200","CIS1210"] } },
+        { "id": "dsm.ml", "label": "Machine Learning / Data Analysis", "min_cu": 1,
+          "from": { "course_ids": ["CIS4190","CIS5190","CIS5200","STAT4710","STAT5710"] } },
+        { "id": "dsm.stats", "label": "Statistics / Probability", "min_cu": 1,
+          "from": { "course_ids": ["ESE3010","ESE4020","STAT4300","STAT4310","STAT4320","ENM5030"] } },
+        { "id": "dsm.systems", "label": "Scalable Systems", "min_cu": 1,
+          "from": { "course_ids": ["NETS2120","CIS5450","CIS5550","CIS2450"] } },
+        {
+          "id": "dsm.electives",
+          "label": "Data Science Electives (2 CU)",
+          "min_cu": 2,
+          "from": { "course_ids": [
+            "CIS1050","ENGR1050","ESE3050","STAT4050","STAT4700","BIOL2510",
+            "CIS2610","STAT4760","CIS4550","CIS5550","CIS4500","CIS5500",
+            "NETS2130","OIDD1050","STAT4750","CIS4190","CIS5190","CIS4210","CIS5210",
+            "CIS4300","CIS5300","CIS5200","MKTG2120","STAT4220","STAT4350",
+            "STAT5200","NETS3120","STAT4330","ESE2000","CIS2450","ESE3060"
+          ] }
+        }
+      ]
+    }
+  },
+
+  "COGSCI_MINOR": {
+    "minor_id": "COGSCI_MINOR",
+    "name": "Cognitive Science Minor",
+    "school": "SAS",
+    "catalog_year": "2025-26",
+    "total_cu": 6,
+    "requirement": {
+      "id": "cogsci_minor_root",
+      "label": "Cognitive Science Minor",
+      "min_cu": 6,
+      "children": [
+        { "id": "cogm.intro", "label": "Intro to Cognitive Science", "min_cu": 1,
+          "from": { "course_ids": ["COGS1001","CIS1400","LING1005","PHIL1840","PSYC1333"] } },
+        { "id": "cogm.psych", "label": "Psychology Foundation", "min_cu": 1,
+          "from": { "course_ids": ["PSYC0001","PSYC1210","PSYC1230","PSYC1310","PSYC1340"] } },
+        {
+          "id": "cogm.breadth",
+          "label": "Breadth Electives (4 CU from at least 3 departments)",
+          "min_cu": 4,
+          "note": "At least 3 different departments. Simplified pool for the demo.",
+          "from": { "course_ids": [
+            "CIS1100","CIS1200","CIS4190","CIS5190","CIS4210","CIS5210","CIS4300","CIS5300",
+            "LING0001","LING0500","LING2300","LING2500","LING3810",
+            "PHIL1710","PHIL2640","PHIL4660","PHIL4721","PHIL4840",
+            "PSYC1230","PSYC1310","PSYC1340","PSYC2310","PSYC2377","PSYC2737",
+            "NRSC1110","NRSC2249","NRSC2270",
+            "BE5210","BE5300"
+          ] }
+        }
+      ]
+    }
+  }
+}

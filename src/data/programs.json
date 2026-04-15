@@ -65,7 +65,7 @@
             "CIS3500","ESE3060","ESE3600","NETS2120","NETS2130",
             "CIS3333","CIS6200","CIS6250","ESE4380","ESE5380","ESE5140","ESE5460","ESE6450","ESE6740","CIS4270","CIS5270",
             "ESE3030","ESE5000","ESE5050","ESE5060","ESE6050","ESE6060","ESE6180","ESE6190",
-            "BE5210","CIS4120","CIS5120","CIS4500","CIS5500","CIS5360","CIS5800","CIS6500","MEAM5200","MEAM6200","ESE4040","ESE6150","ESE6500","ESE6510","NETS3120","NETS4120"
+            "BE5210","CIS4120","CIS5120","CIS4500","CIS5500","CIS5360","CIS5800","CIS6500","MEAM4600","MEAM5200","MEAM6200","ESE4040","ESE6150","ESE6500","ESE6510","NETS3120","NETS4120"
           ] }
         },
         {
@@ -91,7 +91,7 @@
           "min_cu": 8,
           "children": [
             { "id": "gen.ai_ethics", "label": "AI Ethics Elective", "min_cu": 1,
-              "from": { "course_ids": ["LAWM5060","CIS4230","CIS5230"] },
+              "from": { "course_ids": ["LAWM5060","CIS4230","CIS5230","EAS2030"] },
               "constraints": [{ "type": "section_title_required", "course_id": "LAWM5060", "value": "Technology Law and Ethics" }] },
             { "id": "gen.cogsci", "label": "Cognitive Science Elective", "min_cu": 1,
               "from": { "course_ids": ["COGS1001","LING0500","LING2500","LING3810","PHIL1710","PHIL2640","PHIL4721","PHIL4840","PSYC1210","PSYC1230","PSYC1310","PSYC1340","PSYC2737"] } },
