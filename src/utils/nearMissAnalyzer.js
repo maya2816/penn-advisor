@@ -6,7 +6,7 @@
  * they're close to completing — even if they've never thought about
  * that minor before.
  *
- * This is the demo moment for Penn Labs: most students don't know
+ * The core insight: most Penn students don't know
  * they're 1 course away from a Math minor, or that their AI BSE
  * required courses overlap heavily with the Data Science minor's
  * requirements. This analyzer surfaces that automatically.
