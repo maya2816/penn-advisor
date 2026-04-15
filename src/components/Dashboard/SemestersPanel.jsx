@@ -1,9 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { buildAttributionMap } from "../../utils/courseAttributionMap.js";
 import { buildSectionStyleMap } from "../../utils/sectionCategoryStyles.js";
 import { buildTimeline } from "../../utils/timelineBuilder.js";
 import { OpenRequirementsPanel } from "./OpenRequirementsPanel.jsx";
 import { TimelineTermCard } from "./TimelineTermCard.jsx";
+import { HorizontalPlannerView } from "./HorizontalPlannerView.jsx";
 
 /**
  * SemestersPanel — chronological degree timeline.
@@ -73,6 +74,8 @@ export function SemestersPanel({
     setPlanByTerm(newPlan || {});
   };
 
+  const [viewMode, setViewMode] = useState("grid"); // "grid" (horizontal) or "list" (vertical timeline)
+
   return (
     <div className="space-y-8">
       <OpenRequirementsPanel
@@ -85,40 +88,85 @@ export function SemestersPanel({
         onApplyAutoPlan={handleApplyAutoPlan}
       />
 
-      <div>
-        <h2 className="text-lg font-semibold text-slate-900">Timeline</h2>
-        <p className="mt-1 max-w-3xl text-sm leading-relaxed text-slate-600">
-          Your completed terms (locked), what you&apos;re taking now, and any planned future terms.
-          Click a course chip to change where it counts in the audit.
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900">Timeline</h2>
+          <p className="mt-1 max-w-3xl text-sm leading-relaxed text-slate-600">
+            {viewMode === "grid"
+              ? "Your full degree at a glance. Switch to list view to edit course assignments."
+              : "Your completed terms (locked), current, and planned future terms. Click a course chip to change where it counts."}
+          </p>
+        </div>
+        <div className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 shadow-sm">
+          <button
+            type="button"
+            onClick={() => setViewMode("grid")}
+            title="Grid view (Carta-style)"
+            className={`rounded-md px-2.5 py-1.5 transition ${
+              viewMode === "grid"
+                ? "bg-penn text-white shadow-sm"
+                : "text-muted hover:bg-slate-50 hover:text-slate-800"
+            }`}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="7" height="7" />
+              <rect x="14" y="3" width="7" height="7" />
+              <rect x="3" y="14" width="7" height="7" />
+              <rect x="14" y="14" width="7" height="7" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("list")}
+            title="List view (detailed timeline)"
+            className={`rounded-md px-2.5 py-1.5 transition ${
+              viewMode === "list"
+                ? "bg-penn text-white shadow-sm"
+                : "text-muted hover:bg-slate-50 hover:text-slate-800"
+            }`}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="8" y1="6" x2="21" y2="6" />
+              <line x1="8" y1="12" x2="21" y2="12" />
+              <line x1="8" y1="18" x2="21" y2="18" />
+              <line x1="3" y1="6" x2="3.01" y2="6" />
+              <line x1="3" y1="12" x2="3.01" y2="12" />
+              <line x1="3" y1="18" x2="3.01" y2="18" />
+            </svg>
+          </button>
+        </div>
       </div>
 
-      <div className="space-y-3">
-        {timeline.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-muted">
-            No terms on file yet. Upload your transcript to see your history, or add a planned
-            term above to start sketching.
-          </p>
-        ) : (
-          timeline.map((entry) => (
-            <TimelineTermCard
-              key={entry.term}
-              kind={entry.kind}
-              term={entry.term}
-              courses={entry.courses}
-              programId={programId}
-              completedCourses={completedCourses}
-              planByTerm={planByTerm}
-              attributionMap={attributionMap}
-              sectionStyleMap={sectionStyleMap}
-              timeline={timeline}
-              onAddCourse={handleAddCourse}
-              onRemoveCourse={handleRemoveCourse}
-              onRemoveTerm={handleRemoveTerm}
-            />
-          ))
-        )}
-      </div>
+      {viewMode === "grid" ? (
+        <HorizontalPlannerView timeline={timeline} />
+      ) : (
+        <div className="space-y-3">
+          {timeline.length === 0 ? (
+            <p className="rounded-2xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-muted">
+              No terms on file yet. Upload your transcript to see your history, or add a planned
+              term above to start sketching.
+            </p>
+          ) : (
+            timeline.map((entry) => (
+              <TimelineTermCard
+                key={entry.term}
+                kind={entry.kind}
+                term={entry.term}
+                courses={entry.courses}
+                programId={programId}
+                completedCourses={completedCourses}
+                planByTerm={planByTerm}
+                attributionMap={attributionMap}
+                sectionStyleMap={sectionStyleMap}
+                timeline={timeline}
+                onAddCourse={handleAddCourse}
+                onRemoveCourse={handleRemoveCourse}
+                onRemoveTerm={handleRemoveTerm}
+              />
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }
