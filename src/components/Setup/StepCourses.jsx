@@ -1,7 +1,13 @@
 import { useRef, useState } from "react";
 import { CourseSearch } from "./CourseSearch.jsx";
 import { parseTranscriptPdf } from "../../utils/transcriptParser.js";
+import programs from "../../data/programs.json" with { type: "json" };
 import courses from "../../data/courses.json" with { type: "json" };
+
+// Supported programs — used to validate uploaded transcripts.
+const SUPPORTED_MAJORS = new Set(
+  Object.values(programs).map((p) => p.name?.toLowerCase()?.trim()).filter(Boolean)
+);
 
 /**
  * StepCourses — enter your completed courses via one of two inputs.
@@ -66,6 +72,20 @@ export function StepCourses({ courses: added, onChange, onParsedTranscript, onBa
 
       if (newOnes.length > 0) {
         onChange([...added, ...newOnes]);
+      }
+
+      // Validate the transcript's program against supported programs.
+      const detectedMajor = data.student?.major?.toLowerCase()?.trim();
+      if (detectedMajor && !SUPPORTED_MAJORS.has(detectedMajor)) {
+        const supportedList = Object.values(programs).map((p) => p.name).join(", ");
+        setParseFeedback({
+          added: 0,
+          dup: 0,
+          unknown: [],
+          programWarning: `Penn Advisor currently supports: ${supportedList}. Your transcript shows "${data.student.major}". Courses were still imported, but the degree audit may not match your actual program requirements.`,
+          student: data.student,
+          totals: data.totals,
+        });
       }
 
       // Bubble the rich transcript data (student name, totals, etc.)
@@ -231,6 +251,11 @@ function ParseFeedback({ feedback, onAddUnknown }) {
   if (!feedback) return null;
   return (
     <div className="space-y-2 text-xs">
+      {feedback.programWarning && (
+        <div className="rounded-lg border border-amber-300/60 bg-amber-50/60 px-3 py-2 text-xs text-amber-900">
+          <span className="font-semibold">Program notice:</span> {feedback.programWarning}
+        </div>
+      )}
       {feedback.student?.name && (
         <p className="rounded-lg border border-success/30 bg-success-soft/40 px-3 py-2 text-success">
           <span className="font-semibold">Detected:</span> {feedback.student.name}

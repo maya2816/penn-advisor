@@ -115,8 +115,8 @@ export function CourseRecordRow({
           <span className="font-medium tabular-nums text-slate-800">{cu} CU</span>
           {course.grade && <span>{course.grade}</span>}
           <div className="flex gap-1">
-            <RatingBadge value={cat?.difficulty} label="Diff" />
-            <RatingBadge value={cat?.workRequired} label="Work" />
+            <RatingBadge value={courses[course.id]?.difficulty} label="Diff" />
+            <RatingBadge value={courses[course.id]?.workRequired} label="Work" />
           </div>
         </div>
       </div>

@@ -5,6 +5,18 @@ import { buildTimeline } from "../../utils/timelineBuilder.js";
 import { OpenRequirementsPanel } from "./OpenRequirementsPanel.jsx";
 import { TimelineTermCard } from "./TimelineTermCard.jsx";
 import { HorizontalPlannerView } from "./HorizontalPlannerView.jsx";
+import { RequirementsBank } from "./RequirementsBank.jsx";
+
+/** Spring → Fall → Spring (skip Summer). */
+function nextTermAfter(label) {
+  const m = label?.match(/^(Spring|Summer|Fall)\s+(\d{4})$/);
+  if (!m) return null;
+  const [, term, y] = m;
+  const year = parseInt(y, 10);
+  if (term === "Spring") return `Fall ${year}`;
+  if (term === "Summer") return `Fall ${year}`;
+  return `Spring ${year + 1}`;
+}
 
 /**
  * SemestersPanel — chronological degree timeline.
@@ -80,12 +92,7 @@ export function SemestersPanel({
     <div className="space-y-8">
       <OpenRequirementsPanel
         completion={completion}
-        completedCourses={completedCourses}
-        planByTerm={planByTerm}
         programId={programId}
-        profile={profile}
-        onAddTerm={handleAddTerm}
-        onApplyAutoPlan={handleApplyAutoPlan}
       />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -135,10 +142,30 @@ export function SemestersPanel({
             </svg>
           </button>
         </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            const last = timeline[timeline.length - 1]?.term;
+            const next = last ? nextTermAfter(last) : "Fall 2026";
+            handleAddTerm(next || "Fall 2026");
+          }}
+          className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-penn/40 hover:bg-penn-50/40 hover:text-penn"
+        >
+          <span className="text-base leading-none">+</span> Add semester
+        </button>
       </div>
 
       {viewMode === "grid" ? (
-        <HorizontalPlannerView timeline={timeline} />
+        <HorizontalPlannerView
+          timeline={timeline}
+          attributionMap={attributionMap}
+          completedCourses={completedCourses}
+          planByTerm={planByTerm}
+          onAddCourse={handleAddCourse}
+          onRemoveCourse={handleRemoveCourse}
+          onRemoveTerm={handleRemoveTerm}
+        />
       ) : (
         <div className="space-y-3">
           {timeline.length === 0 ? (
@@ -167,6 +194,16 @@ export function SemestersPanel({
           )}
         </div>
       )}
+
+      <RequirementsBank
+        completion={completion}
+        programId={programId}
+        completedCourses={completedCourses}
+        planByTerm={planByTerm}
+        setPlanByTerm={setPlanByTerm}
+        profile={profile}
+        onApplyAutoPlan={handleApplyAutoPlan}
+      />
     </div>
   );
 }
