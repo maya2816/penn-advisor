@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DndContext, DragOverlay, useDraggable } from "@dnd-kit/core";
 import courses from "../../data/courses.json" with { type: "json" };
 import { CourseSearch } from "../Setup/CourseSearch.jsx";
 import { GRAD_TERM_OPTIONS } from "../../utils/graduationTerms.js";
@@ -13,15 +14,14 @@ import { generatePlan } from "../../utils/planGenerator.js";
 const catalogList = Object.values(courses);
 
 /**
- * RequirementsBank — a dynamic bank of unfilled requirement "slots"
- * that sits below the timeline. Each slot is a dashed card representing
- * a requirement leaf that still needs courses. Students click a slot
- * to search and assign a course, or use "Suggest a plan" to fill all
- * slots automatically.
+ * RequirementsBank — horizontal bank of unfilled requirement slots.
  *
- * The bank updates dynamically: when a course is added to a planned
- * semester, the corresponding gap shrinks or disappears. When a
- * semester is deleted, its gaps reappear.
+ * Rendered as a horizontally scrollable row of dashed slot cards,
+ * grouped by section. Each card is DRAGGABLE — drop it onto a planned
+ * semester column to assign it there (or click to search inline).
+ *
+ * The bank sits BESIDE the planned semesters so the student can see
+ * both at once — "what I still need" next to "where I'm putting it."
  */
 export function RequirementsBank({
   completion,
@@ -45,7 +45,6 @@ export function RequirementsBank({
     return getIncompleteGaps(completion, programReq);
   }, [completion, programReq]);
 
-  // Group gaps by section for visual grouping
   const gapsBySection = useMemo(() => {
     if (!completion?.root?.children?.length || gaps.length === 0) return [];
     const leafToSection = {};
@@ -83,18 +82,13 @@ export function RequirementsBank({
   const hasExistingPlan = Object.values(planByTerm || {}).some((a) => a?.length > 0);
 
   const handleSuggestPlan = () => {
-    if (hasExistingPlan) {
-      setConfirmOverwrite(true);
-      return;
-    }
+    if (hasExistingPlan) { setConfirmOverwrite(true); return; }
     runAutoPlan();
   };
 
   const runAutoPlan = () => {
     const result = generatePlan({
-      completion,
-      completedCourses,
-      programId,
+      completion, completedCourses, programId,
       targetTerm: selectedTargetTerm || null,
     });
     onApplyAutoPlan(result.planByTerm);
@@ -102,7 +96,6 @@ export function RequirementsBank({
     setConfirmOverwrite(false);
   };
 
-  // Find the first planned term to add courses to
   const firstPlannedTerm = useMemo(() => {
     const planned = Object.keys(planByTerm || {}).sort(compareSemesterLabels);
     return planned[0] || null;
@@ -110,69 +103,69 @@ export function RequirementsBank({
 
   if (gaps.length === 0) {
     return (
-      <section className="rounded-2xl border border-emerald-200/60 bg-emerald-50/30 p-5">
+      <div className="rounded-xl border border-emerald-200/60 bg-emerald-50/30 px-4 py-3">
         <p className="text-sm font-medium text-emerald-900">
-          All requirement areas are satisfied.
+          All requirement areas satisfied.
         </p>
-      </section>
+      </div>
     );
   }
 
   return (
     <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
-      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <div>
           <h3 className="text-base font-semibold text-slate-900">Remaining Requirements</h3>
           <p className="mt-0.5 text-xs text-muted">
             <span className="num font-semibold text-slate-800">{totalMissing}</span> CU left.
-            Click a slot to assign a course, or auto-fill with Suggest a plan.
+            Drag a slot to a planned semester, or click to assign a course.
           </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="text-xs font-medium text-slate-600">Finish by</label>
+          <select
+            value={selectedTargetTerm}
+            onChange={(e) => setSelectedTargetTerm(e.target.value)}
+            className="rounded-lg border border-slate-200 bg-slate-50/40 px-2 py-1 text-xs"
+          >
+            {GRAD_TERM_OPTIONS.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={handleSuggestPlan}
+            className="rounded-full bg-penn px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-penn-500"
+          >
+            Suggest a plan
+          </button>
         </div>
       </div>
 
-      {/* Slot cards grouped by section */}
-      <div className="space-y-4">
-        {gapsBySection.map(([section, sectionGaps]) => (
-          <div key={section}>
-            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted">
-              {section}
-            </p>
-            <div className="flex flex-wrap gap-2">
+      {/* Horizontal scrollable row of slot cards */}
+      <div className="overflow-x-auto">
+        <div className="flex gap-2 pb-2">
+          {gapsBySection.map(([section, sectionGaps]) => (
+            <div key={section} className="flex items-start gap-2">
+              <div className="flex shrink-0 items-center">
+                <span className="mr-2 -rotate-90 whitespace-nowrap text-[9px] font-bold uppercase tracking-widest text-slate-400 sm:rotate-0">
+                  {section}
+                </span>
+              </div>
               {sectionGaps.map((gap) => (
                 <SlotCard
                   key={gap.id}
                   gap={gap}
-                  programId={programId}
                   existingForSearch={existingForSearch}
                   firstPlannedTerm={firstPlannedTerm}
                   planByTerm={planByTerm}
                   setPlanByTerm={setPlanByTerm}
                 />
               ))}
+              <div className="w-px self-stretch bg-slate-200/60" />
             </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Suggest a plan CTA */}
-      <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
-        <label className="text-xs font-medium text-slate-600">Finish by</label>
-        <select
-          value={selectedTargetTerm}
-          onChange={(e) => setSelectedTargetTerm(e.target.value)}
-          className="rounded-lg border border-slate-200 bg-slate-50/40 px-2.5 py-1.5 text-xs"
-        >
-          {GRAD_TERM_OPTIONS.map((t) => (
-            <option key={t} value={t}>{t}</option>
           ))}
-        </select>
-        <button
-          type="button"
-          onClick={handleSuggestPlan}
-          className="rounded-full bg-penn px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-penn-500"
-        >
-          Suggest a plan
-        </button>
+        </div>
       </div>
 
       {planWarnings.length > 0 && (
@@ -199,18 +192,7 @@ export function RequirementsBank({
   );
 }
 
-/**
- * SlotCard — one dashed requirement slot card.
- * Click to open a search scoped to courses that satisfy this requirement.
- */
-function SlotCard({
-  gap,
-  programId,
-  existingForSearch,
-  firstPlannedTerm,
-  planByTerm,
-  setPlanByTerm,
-}) {
+function SlotCard({ gap, existingForSearch, firstPlannedTerm, planByTerm, setPlanByTerm }) {
   const [searchOpen, setSearchOpen] = useState(false);
 
   const allowedIds = useMemo(() => {
@@ -219,7 +201,6 @@ function SlotCard({
   }, [gap.raw]);
 
   const handleAddCourse = (courseId) => {
-    // Add to the first planned term, or create one if none exist
     let targetTerm = firstPlannedTerm;
     if (!targetTerm) {
       targetTerm = GRAD_TERM_OPTIONS[0] || "Fall 2026";
@@ -231,37 +212,27 @@ function SlotCard({
     setSearchOpen(false);
   };
 
-  return (
-    <div className="w-[180px]">
-      {!searchOpen ? (
-        <button
-          type="button"
-          onClick={() => setSearchOpen(true)}
-          className="flex w-full flex-col items-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/30 px-3 py-4 text-center transition hover:border-penn hover:bg-penn-50/20"
-        >
-          <span className="text-xs font-semibold text-slate-700">{gap.label}</span>
-          <span className="num mt-0.5 text-[10px] text-muted">{gap.missing} CU</span>
-          <span className="mt-2 text-[10px] text-penn">Click to assign course</span>
-        </button>
-      ) : (
-        <div className="rounded-xl border border-penn/30 bg-white p-2 shadow-sm">
-          <div className="mb-1 flex items-center justify-between">
-            <span className="text-[10px] font-semibold text-slate-700">{gap.label}</span>
-            <button
-              type="button"
-              onClick={() => setSearchOpen(false)}
-              className="text-[10px] text-slate-400 hover:text-slate-700"
-            >
-              ×
-            </button>
-          </div>
-          <CourseSearch
-            existing={existingForSearch}
-            allowedIds={allowedIds}
-            onAdd={handleAddCourse}
-          />
+  if (searchOpen) {
+    return (
+      <div className="w-[220px] shrink-0 rounded-xl border border-penn/30 bg-white p-2 shadow-sm">
+        <div className="mb-1 flex items-center justify-between">
+          <span className="text-[10px] font-semibold text-slate-700">{gap.label}</span>
+          <button type="button" onClick={() => setSearchOpen(false)} className="text-[10px] text-slate-400 hover:text-slate-700">×</button>
         </div>
-      )}
-    </div>
+        <CourseSearch existing={existingForSearch} allowedIds={allowedIds} onAdd={handleAddCourse} />
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => setSearchOpen(true)}
+      className="flex w-[140px] shrink-0 flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/30 px-2 py-3 text-center transition hover:border-penn hover:bg-penn-50/20"
+    >
+      <span className="text-[11px] font-semibold leading-tight text-slate-700">{gap.label}</span>
+      <span className="num mt-0.5 text-[10px] text-muted">{gap.missing} CU</span>
+      <span className="mt-1.5 text-[9px] text-penn">Click to assign</span>
+    </button>
   );
 }
