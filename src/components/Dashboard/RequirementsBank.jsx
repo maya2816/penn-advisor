@@ -45,8 +45,29 @@ export function RequirementsBank({
     return getIncompleteGaps(completion, programReq);
   }, [completion, programReq]);
 
+  // Adjust gaps to account for planned courses — subtract CU of planned
+  // courses that are eligible for each gap. This makes the bank dynamic:
+  // when you add a course to a planned term that satisfies a gap, the
+  // gap shrinks or disappears from the bank.
+  const adjustedGaps = useMemo(() => {
+    const plannedIds = new Set(Object.values(planByTerm || {}).flat());
+    return gaps
+      .map((g) => {
+        if (!g.raw) return g;
+        const eligible = courseIdsMatchingLeafPool(g.raw, catalogList);
+        if (!eligible) return g; // "any" pool — can't auto-check
+        let plannedCuForGap = 0;
+        for (const id of plannedIds) {
+          if (eligible.has(id)) plannedCuForGap += courses[id]?.cu ?? 1;
+        }
+        const remaining = Math.max(0, g.missing - plannedCuForGap);
+        return remaining > 0 ? { ...g, missing: remaining } : null;
+      })
+      .filter(Boolean);
+  }, [gaps, planByTerm]);
+
   const gapsBySection = useMemo(() => {
-    if (!completion?.root?.children?.length || gaps.length === 0) return [];
+    if (!completion?.root?.children?.length || adjustedGaps.length === 0) return [];
     const leafToSection = {};
     for (const sec of completion.root.children) {
       const visit = (n) => {
@@ -56,15 +77,15 @@ export function RequirementsBank({
       visit(sec);
     }
     const groups = new Map();
-    for (const g of gaps) {
+    for (const g of adjustedGaps) {
       const section = leafToSection[g.id] || "Other";
       if (!groups.has(section)) groups.set(section, []);
       groups.get(section).push(g);
     }
     return [...groups.entries()];
-  }, [completion, gaps]);
+  }, [completion, adjustedGaps]);
 
-  const totalMissing = gaps.reduce((s, g) => s + g.missing, 0);
+  const totalMissing = adjustedGaps.reduce((s, g) => s + g.missing, 0);
 
   const completedIds = useMemo(
     () => new Set((completedCourses || []).map((c) => c.id)),
@@ -195,6 +216,11 @@ export function RequirementsBank({
 function SlotCard({ gap, existingForSearch, firstPlannedTerm, planByTerm, setPlanByTerm }) {
   const [searchOpen, setSearchOpen] = useState(false);
 
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `slot:${gap.id}`,
+    data: { gap },
+  });
+
   const allowedIds = useMemo(() => {
     if (!gap.raw) return undefined;
     return courseIdsMatchingLeafPool(gap.raw, catalogList);
@@ -212,6 +238,9 @@ function SlotCard({ gap, existingForSearch, firstPlannedTerm, planByTerm, setPla
     setSearchOpen(false);
   };
 
+  // Close search if dragging starts
+  if (isDragging && searchOpen) setSearchOpen(false);
+
   if (searchOpen) {
     return (
       <div className="w-[220px] shrink-0 rounded-xl border border-penn/30 bg-white p-2 shadow-sm">
@@ -226,13 +255,18 @@ function SlotCard({ gap, existingForSearch, firstPlannedTerm, planByTerm, setPla
 
   return (
     <button
+      ref={setNodeRef}
       type="button"
       onClick={() => setSearchOpen(true)}
-      className="flex w-[140px] shrink-0 flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/30 px-2 py-3 text-center transition hover:border-penn hover:bg-penn-50/20"
+      {...attributes}
+      {...listeners}
+      className={`flex w-[140px] shrink-0 cursor-grab flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/30 px-2 py-3 text-center transition hover:border-penn hover:bg-penn-50/20 active:cursor-grabbing ${
+        isDragging ? "opacity-40" : ""
+      }`}
     >
       <span className="text-[11px] font-semibold leading-tight text-slate-700">{gap.label}</span>
       <span className="num mt-0.5 text-[10px] text-muted">{gap.missing} CU</span>
-      <span className="mt-1.5 text-[9px] text-penn">Click to assign</span>
+      <span className="mt-1.5 text-[9px] text-penn">Drag or click</span>
     </button>
   );
 }

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useDroppable } from "@dnd-kit/core";
 import courses from "../../data/courses.json" with { type: "json" };
 import { RatingBadge, computeTermMean } from "./RatingBadge.jsx";
 import { AddPlannedCourseInline } from "./AddPlannedCourseInline.jsx";
@@ -133,8 +134,18 @@ function TermColumn({
 
   const isEmpty = courseList.length === 0;
 
+  // Only planned columns are droppable (completed/in-progress are locked)
+  const { setNodeRef: setDropRef, isOver } = isPlanned
+    ? useDroppable({ id: `drop:${term}` })
+    : { setNodeRef: undefined, isOver: false };
+
+  const dropHighlight = isOver ? "ring-2 ring-penn/40 ring-inset bg-penn-50/20" : "";
+
   return (
-    <div className={`flex flex-col rounded-2xl shadow-card ${status.column}`}>
+    <div
+      ref={setDropRef}
+      className={`flex flex-col rounded-2xl shadow-card ${status.column} ${dropHighlight} transition-all`}
+    >
       {/* Header */}
       <div className="border-b border-slate-100 px-4 py-3 text-center">
         <div className="flex items-center justify-center gap-2">

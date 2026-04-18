@@ -1,11 +1,16 @@
 import { useMemo, useState } from "react";
+import { DndContext, DragOverlay } from "@dnd-kit/core";
+import courses from "../../data/courses.json" with { type: "json" };
 import { buildAttributionMap } from "../../utils/courseAttributionMap.js";
 import { buildSectionStyleMap } from "../../utils/sectionCategoryStyles.js";
 import { buildTimeline } from "../../utils/timelineBuilder.js";
+import { courseIdsMatchingLeafPool } from "../../utils/programRequirementIndex.js";
 import { OpenRequirementsPanel } from "./OpenRequirementsPanel.jsx";
 import { TimelineTermCard } from "./TimelineTermCard.jsx";
 import { HorizontalPlannerView } from "./HorizontalPlannerView.jsx";
 import { RequirementsBank } from "./RequirementsBank.jsx";
+
+const catalogList = Object.values(courses);
 
 /** Spring → Fall → Spring (skip Summer). */
 function nextTermAfter(label) {
@@ -86,9 +91,64 @@ export function SemestersPanel({
     setPlanByTerm(newPlan || {});
   };
 
-  const [viewMode, setViewMode] = useState("grid"); // "grid" (horizontal) or "list" (vertical timeline)
+  const [viewMode, setViewMode] = useState("grid");
+  const [activeSlot, setActiveSlot] = useState(null);
+  const [dropWarning, setDropWarning] = useState(null);
+
+  // All IDs already taken or planned (for filtering eligible courses on drop)
+  const allUsedIds = useMemo(() => {
+    const s = new Set((completedCourses || []).map((c) => c.id));
+    for (const ids of Object.values(planByTerm || {})) {
+      for (const id of ids) s.add(id);
+    }
+    return s;
+  }, [completedCourses, planByTerm]);
+
+  const handleDragStart = ({ active }) => {
+    setActiveSlot(active.data?.current?.gap || null);
+    setDropWarning(null);
+  };
+
+  const handleDragEnd = ({ active, over }) => {
+    setActiveSlot(null);
+    if (!over) return; // cancelled
+    const overId = String(over.id);
+    if (!overId.startsWith("drop:")) return; // not a valid drop target
+
+    const targetTerm = overId.slice(5); // remove "drop:" prefix
+    const gap = active.data?.current?.gap;
+    if (!gap?.raw) return;
+
+    // Find the first eligible course not already used
+    const eligible = courseIdsMatchingLeafPool(gap.raw, catalogList);
+    if (!eligible) {
+      // "any" pool — too broad to auto-pick
+      setDropWarning(`"${gap.label}" accepts any course — click the slot to search.`);
+      setTimeout(() => setDropWarning(null), 4000);
+      return;
+    }
+
+    // Rank: prefer courses with fewer prereqs, then lower course number
+    const ranked = [...eligible]
+      .filter((id) => !allUsedIds.has(id))
+      .sort((a, b) => {
+        const pa = (courses[a]?.prerequisites || []).length;
+        const pb = (courses[b]?.prerequisites || []).length;
+        if (pa !== pb) return pa - pb;
+        return a.localeCompare(b);
+      });
+
+    if (ranked.length === 0) {
+      setDropWarning(`No eligible courses available for "${gap.label}".`);
+      setTimeout(() => setDropWarning(null), 4000);
+      return;
+    }
+
+    handleAddCourse(targetTerm, ranked[0]);
+  };
 
   return (
+    <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
     <div className="space-y-8">
       <OpenRequirementsPanel
         completion={completion}
@@ -204,6 +264,22 @@ export function SemestersPanel({
         profile={profile}
         onApplyAutoPlan={handleApplyAutoPlan}
       />
+
+      {dropWarning && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50/80 px-4 py-2 text-xs text-amber-900">
+          {dropWarning}
+        </div>
+      )}
+
+      <DragOverlay>
+        {activeSlot && (
+          <div className="flex w-[140px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-penn bg-penn-50/40 px-2 py-3 text-center shadow-lg">
+            <span className="text-[11px] font-semibold text-penn">{activeSlot.label}</span>
+            <span className="num mt-0.5 text-[10px] text-penn/70">{activeSlot.missing} CU</span>
+          </div>
+        )}
+      </DragOverlay>
     </div>
+    </DndContext>
   );
 }
